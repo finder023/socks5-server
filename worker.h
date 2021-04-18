@@ -35,7 +35,7 @@ class Worker : public IWorker {
 
  private:
   const uint16_t            port_;
-  std::unique_ptr<Listener> listener_;
+  std::shared_ptr<Listener> listener_;
   bool                      run_;
 
   static Worker* instance_;

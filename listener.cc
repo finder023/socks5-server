@@ -19,11 +19,11 @@
 
 namespace socks5 {
 
-std::shared_ptr<Event> Listener::StartListener() {
+bool Listener::StartListener() {
   int fd = socket(AF_INET, SOCK_STREAM, 0);
   if (fd <= 0) {
     fmt::print(stderr, "call socket failed. err = {}\n", strerror(errno));
-    return nullptr;
+    return false;
   }
 
   sockaddr_in sin{0};
@@ -34,17 +34,17 @@ std::shared_ptr<Event> Listener::StartListener() {
   if (bind(fd, reinterpret_cast<const sockaddr*>(&sin), sizeof(sin)) != 0) {
     fmt::print(stderr, "call bind failed. err = {}\n", strerror(errno));
     close(fd);
-    return nullptr;
+    return false;
   }
 
   if (listen(fd, 1024) != 0) {
     fmt::print(stderr, "call listen failed. err = {}\n", strerror(errno));
     close(fd);
-    return nullptr;
+    return false;
   }
 
   fd_ = fd;
-  return std::shared_ptr<Event>(this);
+  return true;
 }
 
 ssize_t Listener::HandleReadable() {

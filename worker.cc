@@ -18,12 +18,12 @@ Worker* Worker::instance_;
 bool Worker::Init() {
   if (!epoll_.Init()) return false;
 
-  listener_     = std::make_unique<Listener>(port_, this);
-  auto accepter = listener_->StartListener();
-  if (!accepter) return false;
+  listener_ = std::make_shared<Listener>(port_, this);
+  if (!listener_) return false;
+  if (!listener_->StartListener()) return false;
 
-  events_[accepter->fd()] = accepter;
-  epoll_.AddEvent(accepter, EPOLLIN);
+  events_[listener_->fd()] = listener_;
+  epoll_.AddEvent(listener_, EPOLLIN);
 
   // register signal
   signal(SIGINT, SignalHandler);

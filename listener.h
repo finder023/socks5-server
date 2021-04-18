@@ -21,8 +21,8 @@ class Listener : public Event {
   Listener(const uint16_t port, IWorker* worker)
       : Event{0}, port_{port}, iworker_{worker} {}
 
-  std::shared_ptr<Event> StartListener();
-  ssize_t                HandleReadable() override;
+  bool    StartListener();
+  ssize_t HandleReadable() override;
 
  private:
   uint16_t port_;
