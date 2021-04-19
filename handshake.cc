@@ -78,22 +78,6 @@ ssize_t Handshake::HandleClose() {
   return 0;
 }
 
-bool Handshake::HandleData() {
-  auto ev1 = this->ToChannel();
-  auto ev2 = std::make_shared<Channel>(req_fd_, iworker_);
-  ev1->SetPeer(ev2);
-  ev2->SetPeer(ev1);
-
-  iworker_->epoll().DelEvent(ev1->fd());
-
-  iworker_->event(ev1->fd()) = ev1;
-  iworker_->event(ev2->fd()) = ev2;
-
-  iworker_->epoll().AddEvent(ev1);
-  iworker_->epoll().AddEvent(ev2);
-  return true;
-}
-
 bool Handshake::HandleAuth() {
   char buff[257];  // 1 + 1 + 255
   if (SocketIO::ReadSocket(

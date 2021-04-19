@@ -27,7 +27,6 @@ class Handshake : public Event {
  private:
   bool HandleAuth();
   bool HandleResquest();
-  bool HandleData();
 
   ssize_t HandleReadable() override;
   ssize_t HandleClose() override;
