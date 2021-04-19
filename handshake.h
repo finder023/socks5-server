@@ -13,30 +13,16 @@
 
 namespace socks5 {
 
-// class Handshake {
-//  public:
-//   Handshake(const int fd) : fd_{fd} {}
-//   int Build();  // return fd
-//
-//  private:
-//   bool HandleAuth();
-//   bool HandleResquest();
-//
-//   bool ParseRemoteAddr();
-//   bool ConnectRemote();
-//
-//  private:
-//   int      fd_;
-//   int      req_fd_;
-//   uint32_t req_ip_;
-//   uint16_t req_port_;
-// };
+class RemoteConn;
 
 class Handshake : public Event {
  public:
   Handshake(const int fd, IWorker* worker)
       : Event{fd}, status_{0}, iworker_{worker}, req_fd_{0} {}
-  int Build();  // return fd
+
+  IWorker*                 iworker() { return iworker_; }
+  std::shared_ptr<Channel> ToChannel();
+  void                     ConfirmRemoteConnection();
 
  private:
   bool HandleAuth();
@@ -55,6 +41,38 @@ class Handshake : public Event {
   int      req_fd_;
   uint32_t req_ip_;
   uint16_t req_port_;
+
+  std::shared_ptr<RemoteConn> remote_conn_;
+};
+
+class RemoteConn : public Event {
+ public:
+  RemoteConn(const int fd, Handshake* hand_shake)
+      : Event{fd}, hand_shake_{hand_shake} {}
+
+  std::shared_ptr<Channel> ToChannel() {
+    auto channel = std::make_shared<Channel>(fd_, hand_shake_->iworker());
+    fd_          = 0;
+    return channel;
+  }
+
+  ssize_t HandleWritable() override {
+    uint32_t  val;
+    socklen_t len = sizeof(val);
+    getsockopt(fd_, SOL_SOCKET, SO_ERROR, &val, &len);
+    if (val == 0) {
+      hand_shake_->ConfirmRemoteConnection();
+      return 0;
+    }
+    return val;
+  }
+
+  ssize_t HandleClose() override {
+    hand_shake_->iworker()->AddExceptionEvent(fd_);
+    return 0;
+  }
+
+  Handshake* hand_shake_;
 };
 
 }  // namespace socks5

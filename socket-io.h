@@ -17,37 +17,6 @@ namespace socks5 {
 
 class SocketIO {
  public:
-  // static ssize_t ReadSocket(const int fd, const Buffer buffer) {
-  //   ssize_t n = read(fd, buffer.memory, buffer.capacity);
-  //   if (n < 0) {
-  //     if (errno == EINTR) return 0;
-  //     fmt::print(stderr, "read socket err. fd = {}, err = {}\n", fd,
-  //                strerror(errno));
-  //     return -1;
-  //   }
-  //   if (n == 0) {
-  //     fmt::print("read socket closed. fd = {}\n", fd);
-  //     return -1;
-  //   }
-
-  //   return n;
-  // }
-
-  // static ssize_t WriteSocket(const int fd, const Buffer buffer) {
-  //   ssize_t n = write(fd, buffer.memory, buffer.capacity);
-  //   if (n < 0) {
-  //     if (errno == EINTR) return 0;
-  //     fmt::print(stderr, "write socker err. fd = {}, err = {}\n", fd,
-  //                strerror(errno));
-  //     return -1;
-  //   }
-  //   if (n == 0) {
-  //     fmt::print("write socket closed. fd = {}\n", fd);
-  //     return -1;
-  //   }
-  //   return n;
-  // }
-
   static ssize_t ReadSocket(const int fd, const Buffer buffer) {
     ssize_t n_read = 0;
     while (n_read < buffer.capacity) {

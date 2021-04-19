@@ -19,12 +19,6 @@
 
 namespace socks5 {
 
-int Handshake::Build() {
-  if (!HandleAuth()) return -1;
-  if (!HandleResquest()) return -1;
-  return req_fd_;
-}
-
 ssize_t Handshake::HandleReadable() {
   switch (status_) {
     case 0:
@@ -35,14 +29,47 @@ ssize_t Handshake::HandleReadable() {
       if (!HandleResquest()) return -1;
       ++status_;
       break;
-    case 2:
-      if (!HandleData()) return -1;
-      ++status_;
-      break;
     default:
       break;
   }
   return 0;
+}
+
+std::shared_ptr<Channel> Handshake::ToChannel() {
+  auto channel = std::make_shared<Channel>(fd_, iworker_);
+  fd_          = 0;
+  return channel;
+}
+
+void Handshake::ConfirmRemoteConnection() {
+  fmt::print("confirm connection\n");
+  ResquestReplyIpv4 reply{.ver      = 5,
+                          .rep      = 0,
+                          .rsv      = 0,
+                          .atyp     = 1,
+                          .bnd_addr = req_ip_,
+                          .bnd_port = req_port_};
+
+  if (SocketIO::WriteSocket(
+          fd_, {reinterpret_cast<uint8_t*>(&reply), sizeof(reply)}) < 0) {
+    HandleClose();
+    return;
+  }
+
+  auto ev1 = this->ToChannel();
+  auto ev2 = remote_conn_->ToChannel();
+
+  ev1->SetPeer(ev2);
+  ev2->SetPeer(ev1);
+
+  iworker_->epoll().DelEvent(ev1->fd());
+  iworker_->epoll().DelEvent(ev2->fd());
+
+  iworker_->event(ev1->fd()) = ev1;
+  iworker_->event(ev2->fd()) = ev2;
+
+  iworker_->epoll().AddEvent(ev1, EPOLLIN);
+  iworker_->epoll().AddEvent(ev2, EPOLLIN);
 }
 
 ssize_t Handshake::HandleClose() {
@@ -52,13 +79,12 @@ ssize_t Handshake::HandleClose() {
 }
 
 bool Handshake::HandleData() {
-  auto ev1 = std::make_shared<Channel>(fd_, iworker_);
+  auto ev1 = this->ToChannel();
   auto ev2 = std::make_shared<Channel>(req_fd_, iworker_);
   ev1->SetPeer(ev2);
   ev2->SetPeer(ev1);
 
-  iworker_->epoll().DelEvent(fd_);
-  iworker_->event(fd_)->ClearFd();
+  iworker_->epoll().DelEvent(ev1->fd());
 
   iworker_->event(ev1->fd()) = ev1;
   iworker_->event(ev2->fd()) = ev2;
@@ -158,11 +184,15 @@ bool Handshake::HandleResquest() {
 
   if (!ConnectRemote()) {
     reply.rep = 1;
+    if (SocketIO::WriteSocket(
+            fd_, {reinterpret_cast<uint8_t*>(&reply), sizeof(reply)}) < 0)
+      return false;
   }
-  // reply
-  if (SocketIO::WriteSocket(
-          fd_, {reinterpret_cast<uint8_t*>(&reply), sizeof(reply)}) < 0)
-    return false;
+
+  remote_conn_             = std::make_shared<RemoteConn>(req_fd_, this);
+  iworker_->event(req_fd_) = remote_conn_;
+  iworker_->epoll().AddEvent(remote_conn_, EPOLLOUT);
+
   return true;
 }
 
