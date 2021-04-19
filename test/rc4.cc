@@ -13,16 +13,21 @@ int main() {
   }
 
   RC4 rc4(key);
-  fmt::print("key: \n{}\n", key);
+  fmt::print("key: {}\n", key);
   std::vector<uint8_t> plain;
-  for (int i = 0; i < 16; ++i) {
+  for (int i = 0; i < 15; ++i) {
     plain.push_back(rand() % 256);
   }
-  fmt::print("plain: \n{}\n", plain);
+  fmt::print("plain: {}\n", plain);
 
   auto en = rc4.DoRC4(plain);
-  fmt::print("en: \n{}\n", en);
+  fmt::print("en: {}\n", en);
 
-  auto de = rc4.DoRC4(en);
-  fmt::print("de: \n{}\n", de);
+  auto front_part = std::vector<uint8_t>{en.begin(), en.begin() + 10};
+  auto left_part  = std::vector<uint8_t>(en.begin() + 10, en.end());
+  RC4  rc4de(key);
+  auto de = rc4de.DoRC4(front_part);
+  fmt::print("front: {}\n", de);
+  auto de1 = rc4de.DoRC4(left_part);
+  fmt::print("left: {}\n", de1);
 }
