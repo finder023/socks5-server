@@ -14,6 +14,7 @@
 #include "buffer.h"
 #include "event.h"
 #include "iworker.h"
+#include "socket-io.h"
 
 namespace socks5 {
 
@@ -62,7 +63,7 @@ class Channel : public Event {
   ssize_t HandleReadable() override {
     ssize_t n;
     if (cache_.capacity - cache_.size > 0) {
-      n = ReadSocket(
+      n = SocketIO::ReadSocket(
           fd_, {cache_.memory + cache_.size, cache_.capacity - cache_.size});
       if (n < 0) {
         return -1;
@@ -75,8 +76,9 @@ class Channel : public Event {
     }
 
     if (peer_.lock() && cache_.size - cache_.seek > 0) {
-      n = WriteSocket(peer_.lock()->fd(),
-                      {cache_.memory + cache_.seek, cache_.size - cache_.seek});
+      n = SocketIO::WriteSocket(
+          peer_.lock()->fd(),
+          {cache_.memory + cache_.seek, cache_.size - cache_.seek});
       if (n < 0) {
         return -1;
       }

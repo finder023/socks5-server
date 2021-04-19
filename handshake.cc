@@ -15,6 +15,7 @@
 
 #include "channel.h"
 #include "protocol.h"
+#include "socket-io.h"
 
 namespace socks5 {
 
@@ -44,6 +45,12 @@ ssize_t Handshake::HandleReadable() {
   return 0;
 }
 
+ssize_t Handshake::HandleClose() {
+  iworker_->AddExceptionEvent(fd_);
+  if (req_fd_) close(req_fd_);
+  return 0;
+}
+
 bool Handshake::HandleData() {
   auto ev1 = std::make_shared<Channel>(fd_, iworker_);
   auto ev2 = std::make_shared<Channel>(req_fd_, iworker_);
@@ -63,8 +70,9 @@ bool Handshake::HandleData() {
 
 bool Handshake::HandleAuth() {
   char buff[257];  // 1 + 1 + 255
-  auto n = read(fd_, buff, sizeof(buff));
-  if (n <= 0) return false;
+  if (SocketIO::ReadSocket(
+          fd_, {reinterpret_cast<uint8_t*>(buff), sizeof(buff)}) < 0)
+    return false;
 
   Auth* auth = reinterpret_cast<Auth*>(buff);
   if (auth->ver != 5) {
@@ -75,8 +83,8 @@ bool Handshake::HandleAuth() {
     if (auth->method[i] != 0) continue;
 
     AuthReply reply = {auth->ver, auth->method[i]};
-    if (write(fd_, reinterpret_cast<const void*>(&reply), sizeof(reply)) !=
-        sizeof(reply))
+    if (SocketIO::WriteSocket(
+            fd_, {reinterpret_cast<uint8_t*>(&reply), sizeof(reply)}) < 0)
       return false;
     return true;
   }
@@ -86,8 +94,9 @@ bool Handshake::HandleAuth() {
 
 bool Handshake::ParseRemoteAddr() {
   char buff[4096];
-  auto n = read(fd_, buff, sizeof(buff));
-  if (n <= 0) return false;
+  if (SocketIO::ReadSocket(
+          fd_, {reinterpret_cast<uint8_t*>(buff), sizeof(buff)}) < 0)
+    return false;
 
   Request* req = reinterpret_cast<Request*>(buff);
   if (req->ver != 5) {
@@ -128,8 +137,9 @@ bool Handshake::ConnectRemote() {
   sin.sin_addr.s_addr = req_ip_;
   sin.sin_port        = req_port_;
 
-  req_fd_ = socket(AF_INET, SOCK_STREAM, 0);
-  if (connect(req_fd_, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) != 0) {
+  req_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  if (connect(req_fd_, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) != 0 &&
+      errno != EINPROGRESS) {
     close(req_fd_);
     return false;
   }
@@ -150,7 +160,9 @@ bool Handshake::HandleResquest() {
     reply.rep = 1;
   }
   // reply
-  if (write(fd_, &reply, sizeof(reply)) == sizeof(reply)) return true;
+  if (SocketIO::WriteSocket(
+          fd_, {reinterpret_cast<uint8_t*>(&reply), sizeof(reply)}) < 0)
+    return false;
   return true;
 }
 

@@ -35,7 +35,7 @@ namespace socks5 {
 class Handshake : public Event {
  public:
   Handshake(const int fd, IWorker* worker)
-      : Event{fd}, status_{0}, iworker_{worker} {}
+      : Event{fd}, status_{0}, iworker_{worker}, req_fd_{0} {}
   int Build();  // return fd
 
  private:
@@ -44,6 +44,7 @@ class Handshake : public Event {
   bool HandleData();
 
   ssize_t HandleReadable() override;
+  ssize_t HandleClose() override;
 
   bool ParseRemoteAddr();
   bool ConnectRemote();

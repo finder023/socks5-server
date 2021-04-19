@@ -51,7 +51,7 @@ ssize_t Listener::HandleReadable() {
   sockaddr_in sin;
   socklen_t   len = sizeof(sin);
 
-  int fd = accept(fd_, reinterpret_cast<sockaddr*>(&sin), &len);
+  int fd = accept4(fd_, reinterpret_cast<sockaddr*>(&sin), &len, SOCK_NONBLOCK);
   if (fd <= 0) {
     fmt::print(stderr, "failed to call accept. err = {}\n", strerror(errno));
     return -1;
