@@ -16,6 +16,7 @@ class Event {
     if (fd_) close(fd_);
   }
   const int fd() const { return fd_; }
+  void      ClearFd() { fd_ = 0; }
 
   virtual ssize_t HandleReadable() { return 0; }
   virtual ssize_t HandleWritable() { return 0; }

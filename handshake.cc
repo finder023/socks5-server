@@ -24,6 +24,43 @@ int Handshake::Build() {
   return req_fd_;
 }
 
+ssize_t Handshake::HandleReadable() {
+  switch (status_) {
+    case 0:
+      if (!HandleAuth()) return -1;
+      ++status_;
+      break;
+    case 1:
+      if (!HandleResquest()) return -1;
+      ++status_;
+      break;
+    case 2:
+      if (!HandleData()) return -1;
+      ++status_;
+      break;
+    default:
+      break;
+  }
+  return 0;
+}
+
+bool Handshake::HandleData() {
+  auto ev1 = std::make_shared<Channel>(fd_, iworker_);
+  auto ev2 = std::make_shared<Channel>(req_fd_, iworker_);
+  ev1->SetPeer(ev2);
+  ev2->SetPeer(ev1);
+
+  iworker_->epoll().DelEvent(fd_);
+  iworker_->event(fd_)->ClearFd();
+
+  iworker_->event(ev1->fd()) = ev1;
+  iworker_->event(ev2->fd()) = ev2;
+
+  iworker_->epoll().AddEvent(ev1);
+  iworker_->epoll().AddEvent(ev2);
+  return true;
+}
+
 bool Handshake::HandleAuth() {
   char buff[257];  // 1 + 1 + 255
   auto n = read(fd_, buff, sizeof(buff));

@@ -65,7 +65,6 @@ class Channel : public Event {
       n = ReadSocket(
           fd_, {cache_.memory + cache_.size, cache_.capacity - cache_.size});
       if (n < 0) {
-        HandleClose();
         return -1;
       }
       cache_.size += n;
@@ -79,7 +78,6 @@ class Channel : public Event {
       n = WriteSocket(peer_.lock()->fd(),
                       {cache_.memory + cache_.seek, cache_.size - cache_.seek});
       if (n < 0) {
-        HandleClose();
         return -1;
       }
       cache_.seek += n;

@@ -60,22 +60,26 @@ ssize_t Listener::HandleReadable() {
   fmt::print("accept from {}:{}. fd = {}\n", inet_ntoa(sin.sin_addr),
              ntohs(sin.sin_port), fd);
 
-  auto ev = std::make_shared<Channel>(fd, iworker_);
-  // handshake
-  auto remote_fd = Handshake(ev->fd()).Build();
-  if (remote_fd <= 0) return -1;
-  auto peer_ev = std::make_shared<Channel>(remote_fd, iworker_);
-
-  // set peer
-  ev->SetPeer(peer_ev);
-  peer_ev->SetPeer(ev);
-
-  iworker_->event(fd)            = std::dynamic_pointer_cast<Event>(ev);
-  iworker_->event(peer_ev->fd()) = std::dynamic_pointer_cast<Event>(peer_ev);
-
-  iworker_->epoll().AddEvent(std::dynamic_pointer_cast<Event>(ev), EPOLLIN);
-  iworker_->epoll().AddEvent(std::dynamic_pointer_cast<Event>(peer_ev),
-                             EPOLLIN);
+  auto hand_shake     = std::make_shared<Handshake>(fd, iworker_);
+  iworker_->event(fd) = hand_shake;
+  iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
+  //  auto ev = std::make_shared<Channel>(fd, iworker_);
+  //  // handshake
+  //  auto remote_fd = Handshake(ev->fd()).Build();
+  //  if (remote_fd <= 0) return -1;
+  //  auto peer_ev = std::make_shared<Channel>(remote_fd, iworker_);
+  //
+  //  // set peer
+  //  ev->SetPeer(peer_ev);
+  //  peer_ev->SetPeer(ev);
+  //
+  //  iworker_->event(fd)            = std::dynamic_pointer_cast<Event>(ev);
+  //  iworker_->event(peer_ev->fd()) =
+  //  std::dynamic_pointer_cast<Event>(peer_ev);
+  //
+  //  iworker_->epoll().AddEvent(std::dynamic_pointer_cast<Event>(ev), EPOLLIN);
+  //  iworker_->epoll().AddEvent(std::dynamic_pointer_cast<Event>(peer_ev),
+  //                             EPOLLIN);
 
   return 0;
 }

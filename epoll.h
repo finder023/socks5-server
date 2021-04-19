@@ -95,18 +95,14 @@ class Epoll {
     for (int i = 0; i < nfd; ++i) {
       epoll_event* ev    = epoll_events_ + i;
       auto&&       event = events_[ev->data.fd];
-      if (!event) {
-        fmt::print(stderr, "empty event\n");
-        continue;
-      }
 
-      if (ev->events & EPOLLIN) {
-        event->HandleReadable();
+      if (event && (ev->events & EPOLLIN)) {
+        if (event->HandleReadable() < 0) event->HandleClose();
       }
-      if (ev->events & EPOLLOUT) {
-        event->HandleWritable();
+      if (event && (ev->events & EPOLLOUT)) {
+        if (event->HandleWritable() < 0) event->HandleClose();
       }
-      if (ev->events & EPOLLHUP || ev->events & EPOLLERR) {
+      if (event && (ev->events & EPOLLHUP || ev->events & EPOLLERR)) {
         event->HandleClose();
       }
     }
