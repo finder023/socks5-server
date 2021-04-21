@@ -14,6 +14,7 @@
 #include "buffer.h"
 #include "event.h"
 #include "iworker.h"
+#include "log.h"
 #include "socket-io.h"
 
 namespace socks5 {
@@ -21,10 +22,10 @@ namespace socks5 {
 class Channel : public Event {
  public:
   Channel(const int fd, IWorker* worker) : Event{fd}, iworker_{worker} {
-    fmt::print("create new Channel. fd = {}\n", fd_);
+    LOG("create new Channel. fd = {}\n", fd_);
   }
 
-  ~Channel() { fmt::print("Channel destroied. fd = {}\n", fd_); }
+  ~Channel() { LOG("Channel destroied. fd = {}\n", fd_); }
 
   void SetPeer(const std::shared_ptr<Event>& ev) { peer_ = ev; }
   const std::shared_ptr<Event> peer() const { return peer_.lock(); }

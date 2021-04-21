@@ -8,18 +8,19 @@
 #include "handshake.h"
 
 #include <arpa/inet.h>
-#include <fmt/format.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <unistd.h>
 
 #include "channel.h"
+#include "log.h"
 #include "protocol.h"
 #include "socket-io.h"
 
 namespace socks5 {
 
 ssize_t Handshake::HandleReadable() {
+  LOG("shake hands readable. fd = {}\n", fd_);
   switch (status_) {
     case 0:
       if (!HandleAuth()) return -1;
@@ -42,7 +43,7 @@ std::shared_ptr<Channel> Handshake::ToChannel() {
 }
 
 void Handshake::ConfirmRemoteConnection() {
-  fmt::print("confirm connection\n");
+  LOG("confirm connection, fd = {}, req_fd = {}\n", fd_, req_fd_);
   ResquestReplyIpv4 reply{.ver      = 5,
                           .rep      = 0,
                           .rsv      = 0,
@@ -132,9 +133,8 @@ bool Handshake::ParseRemoteAddr() {
       req_ip_ = *reinterpret_cast<uint32_t*>(*p);
       break;
     }
-    fmt::print("target: {}:{}\n",
-               inet_ntoa(*reinterpret_cast<in_addr*>(&req_ip_)),
-               ntohs(req_port_));
+    LOG("target: {}:{}\n", inet_ntoa(*reinterpret_cast<in_addr*>(&req_ip_)),
+        ntohs(req_port_));
   } else {
     return false;
   }
@@ -172,8 +172,9 @@ bool Handshake::HandleResquest() {
             fd_, {reinterpret_cast<uint8_t*>(&reply), sizeof(reply)}) < 0)
       return false;
   }
+  remote_conn_ = std::make_shared<RemoteConn>(req_fd_, this);
+  iworker_->epoll().DelEvent(fd_);  // wait for connction confirm.
 
-  remote_conn_             = std::make_shared<RemoteConn>(req_fd_, this);
   iworker_->event(req_fd_) = remote_conn_;
   iworker_->epoll().AddEvent(remote_conn_, EPOLLOUT);
 

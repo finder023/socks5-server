@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <fmt/format.h>
 #include <signal.h>
 #include <stdint.h>
 #include <sys/wait.h>
@@ -17,6 +16,7 @@
 
 #include "iworker.h"
 #include "listener.h"
+#include "log.h"
 
 namespace socks5 {
 

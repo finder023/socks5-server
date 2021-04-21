@@ -7,11 +7,11 @@
 #pragma once
 
 #include <errno.h>
-#include <fmt/format.h>
 #include <stdint.h>
 #include <unistd.h>
 
 #include "buffer.h"
+#include "log.h"
 
 namespace socks5 {
 
@@ -24,12 +24,12 @@ class SocketIO {
       if (n < 0) {
         if (errno == EINTR) continue;
         if (errno == EWOULDBLOCK) break;
-        fmt::print(stderr, "read socket err. fd = {}, err = {}\n", fd,
-                   strerror(errno));
+        LOG(stderr, "read socket err. fd = {}, err = {}\n", fd,
+            strerror(errno));
         return -1;
       }
       if (n == 0) {
-        fmt::print("read socket closed. fd = {}\n", fd);
+        LOG("read socket closed. fd = {}\n", fd);
         return -1;
       }
       n_read += n;
@@ -44,12 +44,12 @@ class SocketIO {
       if (n < 0) {
         if (errno == EINTR) continue;
         if (errno == EWOULDBLOCK) break;
-        fmt::print(stderr, "write socker err. fd = {}, err = {}\n", fd,
-                   strerror(errno));
+        LOG(stderr, "write socker err. fd = {}, err = {}\n", fd,
+            strerror(errno));
         return -1;
       }
       if (n == 0) {
-        fmt::print("write socket closed. fd = {}\n", fd);
+        LOG("write socket closed. fd = {}\n", fd);
         return -1;
       }
       n_write += n;

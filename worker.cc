@@ -38,7 +38,7 @@ bool Worker::Init() {
 int Worker::Run() {
   if (!Init()) return -1;
 
-  fmt::print("worker init done\n");
+  LOG("worker init done\n");
   while (run_) {
     epoll_.Wait(-1);
   }
@@ -52,7 +52,7 @@ void Worker::AddExceptionEvent(const int fd) {
 }
 
 void Worker::WorkerSignal(int sig) {
-  fmt::print("signal [{}] captured\n", sig);
+  LOG("signal [{}] captured\n", sig);
   switch (sig) {
     case SIGKILL:
     case SIGTERM:

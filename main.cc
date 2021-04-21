@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
         port = static_cast<uint16_t>(std::atoi(optarg));
         break;
       default:
-        fmt::print("Invalid opt");
+        LOG("Invalid opt");
     }
   }
   return std::make_unique<socks5::Worker>(port)->Run();

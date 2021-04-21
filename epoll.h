@@ -6,12 +6,12 @@
  */
 #pragma once
 
-#include <fmt/format.h>
 #include <sys/epoll.h>
 
 #include <array>
 
 #include "event.h"
+#include "log.h"
 
 template <size_t S>
 class Epoll {
@@ -24,8 +24,7 @@ class Epoll {
 
   bool Init() {
     if ((epoll_fd_ = epoll_create(S)) <= 0) {
-      fmt::print(stderr, "call epoll_create failed. err = {}\n",
-                 strerror(errno));
+      LOG(stderr, "call epoll_create failed. err = {}\n", strerror(errno));
       return false;
     }
 
@@ -42,8 +41,8 @@ class Epoll {
     ev.data.fd = event->fd();
     ev.events  = flag;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, event->fd(), &ev) == -1) {
-      fmt::print(stderr, "call epoll_ctl add failed. fd = {}, err = {}\n",
-                 event->fd(), strerror(errno));
+      LOG(stderr, "call epoll_ctl add failed. fd = {}, err = {}\n", event->fd(),
+          strerror(errno));
       return false;
     }
 
@@ -56,8 +55,8 @@ class Epoll {
     epoll_event ev;
     ev.data.fd = fd;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, &ev) == -1) {
-      fmt::print(stderr, "call epoll_ctl del failed. fd = {}, err = {}\n", fd,
-                 strerror(errno));
+      LOG(stderr, "call epoll_ctl del failed. fd = {}, err = {}\n", fd,
+          strerror(errno));
       return false;
     }
 
@@ -77,8 +76,8 @@ class Epoll {
     ev.data.fd = event->fd();
     ev.events  = flag;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, event->fd(), &ev) == -1) {
-      fmt::print(stderr, "call epoll_ctl mod failed. fd = {}, err = {}\n",
-                 event->fd(), strerror(errno));
+      LOG(stderr, "call epoll_ctl mod failed. fd = {}, err = {}\n", event->fd(),
+          strerror(errno));
       return false;
     }
 
@@ -88,7 +87,7 @@ class Epoll {
   bool Wait(int timeout) {
     int nfd = epoll_wait(epoll_fd_, epoll_events_, S, timeout);
     if (nfd == -1) {
-      fmt::print(stderr, "call epoll_wait failed. err = {}\n", strerror(errno));
+      LOG(stderr, "call epoll_wait failed. err = {}\n", strerror(errno));
       return false;
     }
 
