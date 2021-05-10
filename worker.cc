@@ -40,7 +40,11 @@ int Worker::Run() {
 
   LOG("worker init done\n");
   while (run_) {
-    epoll_.Wait(-1);
+    epoll_.Wait(10);
+
+    for (auto&& [_, ev] : events_) {
+      ev->HandleLoop();
+    }
   }
 
   return 0;
@@ -48,7 +52,7 @@ int Worker::Run() {
 
 void Worker::AddExceptionEvent(const int fd) {
   epoll_.DelEvent(fd);
-  events_[fd] = nullptr;
+  events_.erase(fd);
 }
 
 void Worker::WorkerSignal(int sig) {

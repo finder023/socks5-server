@@ -9,6 +9,7 @@
 #include <sys/epoll.h>
 
 #include <array>
+#include <unordered_map>
 
 #include "event.h"
 #include "log.h"
@@ -16,7 +17,7 @@
 template <size_t S>
 class Epoll {
  public:
-  Epoll(std::array<std::shared_ptr<Event>, S>& events)
+  Epoll(std::unordered_map<int, std::shared_ptr<Event>>& events)
       : epoll_fd_{0}, events_{events} {
     bzero(epoll_events_, sizeof(epoll_events_));
   }
@@ -68,7 +69,7 @@ class Epoll {
       return false;
     }
 
-    if (!events_[event->fd()]) {
+    if (events_.count(event->fd()) == 0) {
       return false;
     }
 
@@ -93,15 +94,23 @@ class Epoll {
 
     for (int i = 0; i < nfd; ++i) {
       epoll_event* ev    = epoll_events_ + i;
-      auto&&       event = events_[ev->data.fd];
+      auto         ev_it = events_.find(ev->data.fd);
+      if (ev_it == events_.end()) continue;
+      auto&& event = ev_it->second;
 
-      if (event && (ev->events & EPOLLIN)) {
-        if (event->HandleReadable() < 0) event->HandleClose();
+      if (ev->events & EPOLLIN) {
+        if (event->HandleReadable() < 0) {
+          event->HandleClose();
+          continue;
+        }
       }
-      if (event && (ev->events & EPOLLOUT)) {
-        if (event->HandleWritable() < 0) event->HandleClose();
+      if (ev->events & EPOLLOUT) {
+        if (event->HandleWritable() < 0) {
+          event->HandleClose();
+          continue;
+        }
       }
-      if (event && (ev->events & EPOLLHUP || ev->events & EPOLLERR)) {
+      if (ev->events & EPOLLHUP || ev->events & EPOLLERR) {
         event->HandleClose();
       }
     }
@@ -110,7 +119,9 @@ class Epoll {
   }
 
  private:
-  epoll_event                            epoll_events_[S];
-  std::array<std::shared_ptr<Event>, S>& events_;
-  int                                    epoll_fd_;
+  epoll_event epoll_events_[S];
+  // std::array<std::shared_ptr<Event>, S>& events_;
+  std::unordered_map<int, std::shared_ptr<Event>>& events_;
+
+  int epoll_fd_;
 };

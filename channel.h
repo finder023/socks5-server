@@ -30,7 +30,25 @@ class Channel : public Event {
   void SetPeer(const std::shared_ptr<Event>& ev) { peer_ = ev; }
   const std::shared_ptr<Event> peer() const { return peer_.lock(); }
 
+  ssize_t HandleLoop() override {
+    if (!peer_.lock()) return -1;
+
+    if (cache_.size - cache_.seek > 0) {
+      ssize_t n = SocketIO::WriteSocket(
+          peer_.lock()->fd(),
+          {cache_.memory + cache_.seek, cache_.size - cache_.seek});
+      if (n < 0) {
+        return -1;
+      }
+      cache_.seek += n;
+    }
+
+    return 0;
+  }
+
   ssize_t HandleReadable() override {
+    if (cache_.seek != 0) cache_.Shift();
+
     ssize_t n;
     if (cache_.capacity - cache_.size > 0) {
       n = SocketIO::ReadSocket(
@@ -40,22 +58,6 @@ class Channel : public Event {
       }
       cache_.size += n;
     }
-
-    if (!peer_.lock() && iworker_->event(fd_)) {
-      return -1;
-    }
-
-    if (peer_.lock() && cache_.size - cache_.seek > 0) {
-      n = SocketIO::WriteSocket(
-          peer_.lock()->fd(),
-          {cache_.memory + cache_.seek, cache_.size - cache_.seek});
-      if (n < 0) {
-        return -1;
-      }
-      cache_.seek += n;
-    }
-
-    cache_.Shift();
 
     return 0;
   }
@@ -69,8 +71,11 @@ class Channel : public Event {
   }
 
  private:
-  std::weak_ptr<Event> peer_;
-  IWorker*             iworker_;
-  Container<0x10000>   cache_;
+  std::weak_ptr<Event>                peer_;
+  IWorker*                            iworker_;
+  std::shared_ptr<Container<0x4000>>  recv_cache_;
+  std::shared_ptr<Container<0x10000>> send_cache_;
+
+  Container<0x10000> cache_;
 };
 }  // namespace socks5

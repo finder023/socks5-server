@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(socks5-server)
 
+set(CMAKE_CXX_STANDARD 17)
 IF (CMAKE_BUILD_TYPE STREQUAL Debug)
   ADD_DEFINITIONS(-DDEBUG)
 ENDIF()

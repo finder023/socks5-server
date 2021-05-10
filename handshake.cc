@@ -66,8 +66,8 @@ void Handshake::ConfirmRemoteConnection() {
   iworker_->epoll().DelEvent(ev1->fd());
   iworker_->epoll().DelEvent(ev2->fd());
 
-  iworker_->event(ev1->fd()) = ev1;
-  iworker_->event(ev2->fd()) = ev2;
+  iworker_->AddEvent(ev1);
+  iworker_->AddEvent(ev2);
 
   iworker_->epoll().AddEvent(ev1, EPOLLIN);
   iworker_->epoll().AddEvent(ev2, EPOLLIN);
@@ -175,7 +175,7 @@ bool Handshake::HandleResquest() {
   remote_conn_ = std::make_shared<RemoteConn>(req_fd_, this);
   iworker_->epoll().DelEvent(fd_);  // wait for connction confirm.
 
-  iworker_->event(req_fd_) = remote_conn_;
+  iworker_->AddEvent(remote_conn_);
   iworker_->epoll().AddEvent(remote_conn_, EPOLLOUT);
 
   return true;

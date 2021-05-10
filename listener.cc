@@ -60,8 +60,10 @@ ssize_t Listener::HandleReadable() {
   LOG("accept from {}:{}. fd = {}\n", inet_ntoa(sin.sin_addr),
       ntohs(sin.sin_port), fd);
 
-  auto hand_shake     = std::make_shared<Handshake>(fd, iworker_);
-  iworker_->event(fd) = hand_shake;
+  auto hand_shake = std::make_shared<Handshake>(fd, iworker_);
+
+  iworker_->AddEvent(hand_shake);
+  //  iworker_->events()[fd] = hand_shake;
   iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
   return 0;
 }
