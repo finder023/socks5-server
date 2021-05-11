@@ -38,16 +38,16 @@ ssize_t Handshake::HandleReadable() {
 
 std::shared_ptr<Channel> Handshake::ToChannel() {
   auto channel = std::make_shared<Channel>(fd_, iworker_);
-  fd_          = 0;
+  fd_ = 0;
   return channel;
 }
 
 void Handshake::ConfirmRemoteConnection() {
   LOG("confirm connection, fd = {}, req_fd = {}\n", fd_, req_fd_);
-  ResquestReplyIpv4 reply{.ver      = 5,
-                          .rep      = 0,
-                          .rsv      = 0,
-                          .atyp     = 1,
+  ResquestReplyIpv4 reply{.ver = 5,
+                          .rep = 0,
+                          .rsv = 0,
+                          .atyp = 1,
                           .bnd_addr = req_ip_,
                           .bnd_port = req_port_};
 
@@ -62,6 +62,12 @@ void Handshake::ConfirmRemoteConnection() {
 
   ev1->SetPeer(ev2);
   ev2->SetPeer(ev1);
+
+  auto c1 = std::make_shared<Container<0x10000>>();
+  auto c2 = std::make_shared<Container<0x10000>>();
+
+  ev1->SetCache(c1, c2);
+  ev2->SetCache(c2, c1);
 
   iworker_->epoll().DelEvent(ev1->fd());
   iworker_->epoll().DelEvent(ev2->fd());
@@ -143,9 +149,9 @@ bool Handshake::ParseRemoteAddr() {
 
 bool Handshake::ConnectRemote() {
   sockaddr_in sin;
-  sin.sin_family      = AF_INET;
+  sin.sin_family = AF_INET;
   sin.sin_addr.s_addr = req_ip_;
-  sin.sin_port        = req_port_;
+  sin.sin_port = req_port_;
 
   req_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (connect(req_fd_, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) != 0 &&
@@ -159,10 +165,10 @@ bool Handshake::ConnectRemote() {
 bool Handshake::HandleResquest() {
   if (!ParseRemoteAddr()) return false;
 
-  ResquestReplyIpv4 reply{.ver      = 5,
-                          .rep      = 0,
-                          .rsv      = 0,
-                          .atyp     = 1,
+  ResquestReplyIpv4 reply{.ver = 5,
+                          .rep = 0,
+                          .rsv = 0,
+                          .atyp = 1,
                           .bnd_addr = req_ip_,
                           .bnd_port = req_port_};
 

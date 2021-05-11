@@ -33,14 +33,14 @@ class Epoll {
   }
 
   bool AddEvent(const std::shared_ptr<Event>& event,
-                uint32_t                      flag = EPOLLIN | EPOLLOUT) {
+                uint32_t flag = EPOLLIN | EPOLLOUT) {
     if (event->fd() >= S || event->fd() <= 0) {
       return false;
     }
 
     epoll_event ev;
     ev.data.fd = event->fd();
-    ev.events  = flag;
+    ev.events = flag;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, event->fd(), &ev) == -1) {
       LOG(stderr, "call epoll_ctl add failed. fd = {}, err = {}\n", event->fd(),
           strerror(errno));
@@ -64,7 +64,13 @@ class Epoll {
     return true;
   }
 
-  bool ModEvent(const std::shared_ptr<Event>& event, uint32_t flag) {
+  bool ModEvent(const int fd, const uint32_t flag) {
+    auto ev_it = events_.find(fd);
+    if (ev_it == events_.end()) return false;
+    return ModEvent(ev_it->second, flag);
+  }
+
+  bool ModEvent(const std::shared_ptr<Event>& event, const uint32_t flag) {
     if (event->fd() >= S || event->fd() <= 0) {
       return false;
     }
@@ -75,7 +81,7 @@ class Epoll {
 
     epoll_event ev;
     ev.data.fd = event->fd();
-    ev.events  = flag;
+    ev.events = flag;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, event->fd(), &ev) == -1) {
       LOG(stderr, "call epoll_ctl mod failed. fd = {}, err = {}\n", event->fd(),
           strerror(errno));
@@ -93,8 +99,8 @@ class Epoll {
     }
 
     for (int i = 0; i < nfd; ++i) {
-      epoll_event* ev    = epoll_events_ + i;
-      auto         ev_it = events_.find(ev->data.fd);
+      epoll_event* ev = epoll_events_ + i;
+      auto ev_it = events_.find(ev->data.fd);
       if (ev_it == events_.end()) continue;
       auto&& event = ev_it->second;
 

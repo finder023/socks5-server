@@ -11,6 +11,7 @@
 #include <array>
 #include <unordered_map>
 
+#include <queue>
 #include "epoll.h"
 #include "event.h"
 
@@ -23,8 +24,14 @@ class IWorker {
 
   auto& epoll() { return epoll_; }
   auto& events() { return events_; }
-  void  AddEvent(const std::shared_ptr<Event>& ev) { events_[ev->fd()] = ev; }
+  void AddEvent(const std::shared_ptr<Event>& ev) { events_[ev->fd()] = ev; }
   std::shared_ptr<Event>& event(const int fd) { return events_[fd]; }
+
+  void AddLoopEvent(const int fd) {
+    auto ev_it = events_.find(fd);
+    if (ev_it == events_.end()) return;
+    loop_events_.push(ev_it->second);
+  }
 
   virtual void AddExceptionEvent(const int fd) = 0;
 
@@ -33,8 +40,8 @@ class IWorker {
 
  protected:
   Epoll<MAX_EVENTS> epoll_;
-  // std::array<std::shared_ptr<Event>, MAX_EVENTS> events_;
   std::unordered_map<int, std::shared_ptr<Event>> events_;
+  std::queue<std::shared_ptr<Event>> loop_events_;
 };
 
 }  // namespace socks5

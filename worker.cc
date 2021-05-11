@@ -39,12 +39,30 @@ int Worker::Run() {
   if (!Init()) return -1;
 
   LOG("worker init done\n");
+  int timeout = 100;
   while (run_) {
-    epoll_.Wait(10);
+    epoll_.Wait(timeout);
 
-    for (auto&& [_, ev] : events_) {
-      ev->HandleLoop();
+    std::queue<std::shared_ptr<Event>> tmp;
+    while (!loop_events_.empty()) {
+      auto ev = loop_events_.front();
+      loop_events_.pop();
+
+      auto status = ev->HandleLoop();
+      switch (status) {
+        case -1:
+          AddExceptionEvent(ev->fd());
+          break;
+        case 1:
+          tmp.push(ev);
+          break;
+        default:
+          break;
+      }
     }
+
+    if (tmp.size()) loop_events_.swap(tmp);
+    timeout = loop_events_.size() ? 0 : 100;
   }
 
   return 0;
