@@ -18,15 +18,15 @@ namespace socks5 {
 
 class Listener : public Event {
  public:
-  Listener(const uint16_t port, IWorker* worker)
-      : Event{0}, port_{port}, iworker_{worker} {}
+  Listener(const sockaddr_in& listen, IWorker* worker)
+      : Event{0}, listen_{listen}, iworker_{worker} {}
 
   bool    StartListener();
   ssize_t HandleReadable() override;
 
  private:
-  uint16_t port_;
-  IWorker* iworker_;
+  sockaddr_in listen_;
+  IWorker*    iworker_;
 };
 
 }  // namespace socks5

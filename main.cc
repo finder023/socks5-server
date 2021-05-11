@@ -8,16 +8,47 @@
 #include "worker.h"
 
 int main(int argc, char** argv) {
-  uint16_t port;
-  int      c;
-  while ((c = getopt(argc, argv, "p:")) != -1) {
+  std::string      listen, deploy_str, protocol_str, encrypt_str;
+  int              c;
+  socks5::Deploy   deploy   = socks5::Deploy::LOCAL;
+  socks5::Protocol protocol = socks5::Protocol::SOCKS5;
+  bool             encrypt  = false;
+
+  const char* usage =
+      "Usage:\n"
+      "  -l listen -> ip:port\n"
+      "  -d deploy -> local/server\n"
+      "  -p protocol -> socks5/private\n"
+      "  -e encrypt -> true/false\n"
+      "  -h help\n";
+
+  while ((c = getopt(argc, argv, "l:hd:p:e:")) != -1) {
     switch (c) {
+      case 'l':
+        listen = optarg;
+        break;
+      case 'd':
+        deploy_str = optarg;
+        if (deploy_str == "local") deploy = socks5::Deploy::LOCAL;
+        if (deploy_str == "server") deploy = socks5::Deploy::SERVER;
+        break;
       case 'p':
-        port = static_cast<uint16_t>(std::atoi(optarg));
+        protocol_str = optarg;
+        if (protocol_str == "socks5") protocol = socks5::Protocol::SOCKS5;
+        if (protocol_str == "private") protocol = socks5::Protocol::PRIVATE;
+        break;
+      case 'e':
+        encrypt_str = optarg;
+        if (encrypt_str == "true") encrypt = true;
+        if (encrypt_str == "false") encrypt = false;
+        break;
+      case 'h':
+        printf("%s", usage);
         break;
       default:
-        LOG("Invalid opt");
+        LOG("Invalid opt\n");
     }
   }
-  return std::make_unique<socks5::Worker>(port)->Run();
+  return std::make_unique<socks5::Worker>(listen, deploy, protocol, encrypt)
+      ->Run();
 }

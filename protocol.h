@@ -76,4 +76,14 @@ struct ResquestReply {
   uint8_t bnd_addr[0];
 } __attribute__((packed));
 
+// private protocol
+struct PrivateRquestHeader {
+  uint16_t port;
+  uint8_t  type;      // 1: ipv4, 2:domain
+  uint8_t  addr_len;  // type 1 -> 4. type2 -> variable
+  int      fd;
+  uint32_t timestamp;
+  char     address[0];
+} __attribute__((packed));
+
 }  // namespace socks5

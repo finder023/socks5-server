@@ -7,7 +7,15 @@ IF (CMAKE_BUILD_TYPE STREQUAL Debug)
   ADD_DEFINITIONS(-DDEBUG)
 ENDIF()
 
-add_executable(${PROJECT_NAME} main.cc  worker.cc listener.cc handshake.cc)
+add_executable(${PROJECT_NAME} 
+  main.cc  
+  worker.cc 
+  listener.cc 
+  handshake-socks5.cc 
+  handshake-private.cc
+  confirm.cc
+)
+
 set(CMAKE_CXX_FLAGS -Werror)
 target_link_libraries(${PROJECT_NAME} fmt)
 

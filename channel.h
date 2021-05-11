@@ -39,9 +39,8 @@ class Channel : public Event {
 
   ssize_t HandleLoop() override {
     if (send_cache_->size <= send_cache_->seek) return 0;
-    ssize_t n =
-        SocketIO::WriteSocket(fd_, {send_cache_->memory + send_cache_->seek,
-                                    send_cache_->size - send_cache_->seek});
+    ssize_t n = SocketIO(fd_).Write({send_cache_->memory + send_cache_->seek,
+                                     send_cache_->size - send_cache_->seek});
     if (n < 0) return -1;
     send_cache_->seek += n;
 
@@ -59,9 +58,8 @@ class Channel : public Event {
     if (recv_cache_->seek != 0) recv_cache_->Shift();
     if (recv_cache_->capacity <= recv_cache_->size) return 0;
 
-    ssize_t n =
-        SocketIO::ReadSocket(fd_, {recv_cache_->memory + recv_cache_->size,
-                                   recv_cache_->capacity - recv_cache_->size});
+    ssize_t n = SocketIO(fd_).Read({recv_cache_->memory + recv_cache_->size,
+                                    recv_cache_->capacity - recv_cache_->size});
     if (n < 0) return -1;
     recv_cache_->size += n;
 
@@ -81,8 +79,8 @@ class Channel : public Event {
   }
 
  private:
-  std::weak_ptr<Event> peer_;
-  IWorker* iworker_;
+  std::weak_ptr<Event>            peer_;
+  IWorker*                        iworker_;
   std::shared_ptr<CacheContainer> recv_cache_;
   std::shared_ptr<CacheContainer> send_cache_;
 };

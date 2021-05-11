@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #include "channel.h"
-#include "handshake.h"
+#include "handshake-socks5.h"
 #include "log.h"
 
 namespace socks5 {
@@ -26,12 +26,8 @@ bool Listener::StartListener() {
     return false;
   }
 
-  sockaddr_in sin{0};
-  sin.sin_family      = AF_INET;
-  sin.sin_addr.s_addr = INADDR_ANY;
-  sin.sin_port        = htons(port_);
-
-  if (bind(fd, reinterpret_cast<const sockaddr*>(&sin), sizeof(sin)) != 0) {
+  if (bind(fd, reinterpret_cast<const sockaddr*>(&listen_), sizeof(listen_)) !=
+      0) {
     LOG(stderr, "call bind failed. err = {}\n", strerror(errno));
     close(fd);
     return false;
@@ -60,10 +56,9 @@ ssize_t Listener::HandleReadable() {
   LOG("accept from {}:{}. fd = {}\n", inet_ntoa(sin.sin_addr),
       ntohs(sin.sin_port), fd);
 
-  auto hand_shake = std::make_shared<Handshake>(fd, iworker_);
+  auto hand_shake = std::make_shared<HandshakeSocks5>(fd, iworker_);
 
   iworker_->AddEvent(hand_shake);
-  //  iworker_->events()[fd] = hand_shake;
   iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
   return 0;
 }

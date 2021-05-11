@@ -18,7 +18,16 @@ Worker* Worker::instance_;
 bool Worker::Init() {
   if (!epoll_.Init()) return false;
 
-  listener_ = std::make_shared<Listener>(port_, this);
+  auto listen_sin = ParseAddress(listen_);
+  if (!listen_sin) return false;
+
+  if (deploy() == Deploy::LOCAL) {
+    auto remote_sin = ParseAddress(remote_);
+    if (!remote_sin) return false;
+    remote_sin_ = *remote_sin;
+  }
+
+  listener_ = std::make_shared<Listener>(*listen_sin, this);
   if (!listener_) return false;
   if (!listener_->StartListener()) return false;
 
@@ -70,6 +79,18 @@ int Worker::Run() {
 void Worker::AddExceptionEvent(const int fd) {
   epoll_.DelEvent(fd);
   events_.erase(fd);
+}
+
+std::optional<sockaddr_in> Worker::ParseAddress(const std::string& s) {
+  auto pos = s.find(':');
+  if (pos == s.npos) return std::nullopt;
+  std::string ip   = {s.begin(), s.begin() + pos};
+  std::string port = {s.begin() + pos + 1, s.end()};
+  sockaddr_in sin;
+  sin.sin_addr.s_addr = inet_addr(ip.c_str());
+  sin.sin_port        = htons(std::atoi(port.c_str()));
+  sin.sin_family      = AF_INET;
+  return sin;
 }
 
 void Worker::WorkerSignal(int sig) {

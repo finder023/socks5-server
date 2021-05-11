@@ -9,13 +9,23 @@
 #include <netinet/in.h>
 
 #include <array>
+#include <queue>
 #include <unordered_map>
 
-#include <queue>
 #include "epoll.h"
 #include "event.h"
 
 namespace socks5 {
+
+enum class Deploy : uint8_t {
+  LOCAL  = 1,
+  SERVER = 2,
+};
+
+enum class Protocol : uint8_t {
+  SOCKS5  = 1,
+  PRIVATE = 2,
+};
 
 class IWorker {
  public:
@@ -24,7 +34,7 @@ class IWorker {
 
   auto& epoll() { return epoll_; }
   auto& events() { return events_; }
-  void AddEvent(const std::shared_ptr<Event>& ev) { events_[ev->fd()] = ev; }
+  void  AddEvent(const std::shared_ptr<Event>& ev) { events_[ev->fd()] = ev; }
   std::shared_ptr<Event>& event(const int fd) { return events_[fd]; }
 
   void AddLoopEvent(const int fd) {
@@ -33,15 +43,19 @@ class IWorker {
     loop_events_.push(ev_it->second);
   }
 
-  virtual void AddExceptionEvent(const int fd) = 0;
+  virtual Deploy      deploy() const                  = 0;
+  virtual Protocol    protocol() const                = 0;
+  virtual bool        encrypt() const                 = 0;
+  virtual sockaddr_in static_addr() const             = 0;
+  virtual void        AddExceptionEvent(const int fd) = 0;
 
  public:
   static constexpr uint32_t MAX_EVENTS = 65536;
 
  protected:
-  Epoll<MAX_EVENTS> epoll_;
+  Epoll<MAX_EVENTS>                               epoll_;
   std::unordered_map<int, std::shared_ptr<Event>> events_;
-  std::queue<std::shared_ptr<Event>> loop_events_;
+  std::queue<std::shared_ptr<Event>>              loop_events_;
 };
 
 }  // namespace socks5
