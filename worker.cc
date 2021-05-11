@@ -35,34 +35,33 @@ bool Worker::Init() {
   return true;
 }
 
+void Worker::ProcessLoopEvent() {
+  while (!loop_events_.empty()) {
+    auto ev = std::move(loop_events_.front());
+    loop_events_.pop();
+
+    auto status = ev->HandleLoop();
+    switch (status) {
+      case -1:
+        AddExceptionEvent(ev->fd());
+        break;
+      case 1:
+        epoll_.ModEvent(ev, EPOLLIN | EPOLLOUT);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 int Worker::Run() {
   if (!Init()) return -1;
 
   LOG("worker init done\n");
-  int timeout = 100;
   while (run_) {
-    epoll_.Wait(timeout);
+    epoll_.Wait(-1);
 
-    std::queue<std::shared_ptr<Event>> tmp;
-    while (!loop_events_.empty()) {
-      auto ev = loop_events_.front();
-      loop_events_.pop();
-
-      auto status = ev->HandleLoop();
-      switch (status) {
-        case -1:
-          AddExceptionEvent(ev->fd());
-          break;
-        case 1:
-          tmp.push(ev);
-          break;
-        default:
-          break;
-      }
-    }
-
-    if (tmp.size()) loop_events_.swap(tmp);
-    timeout = loop_events_.size() ? 0 : 100;
+    ProcessLoopEvent();
   }
 
   return 0;

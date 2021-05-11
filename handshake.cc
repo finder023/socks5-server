@@ -63,8 +63,8 @@ void Handshake::ConfirmRemoteConnection() {
   ev1->SetPeer(ev2);
   ev2->SetPeer(ev1);
 
-  auto c1 = std::make_shared<Container<0x10000>>();
-  auto c2 = std::make_shared<Container<0x10000>>();
+  auto c1 = std::make_shared<Channel::CacheContainer>();
+  auto c2 = std::make_shared<Channel::CacheContainer>();
 
   ev1->SetCache(c1, c2);
   ev2->SetCache(c2, c1);

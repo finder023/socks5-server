@@ -26,17 +26,19 @@ class Worker : public IWorker {
   ~Worker() {}
 
   bool Init();
-  int  Run();
+  int Run();
 
   void AddExceptionEvent(const int fd) override;
 
-  void        WorkerSignal(int sig);
+  void WorkerSignal(int sig);
   static void SignalHandler(int sig) { instance_->WorkerSignal(sig); }
 
+  void ProcessLoopEvent();
+
  private:
-  const uint16_t            port_;
+  const uint16_t port_;
   std::shared_ptr<Listener> listener_;
-  bool                      run_;
+  bool run_;
 
   static Worker* instance_;
 };

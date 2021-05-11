@@ -24,14 +24,13 @@ class Channel : public Event {
   Channel(const int fd, IWorker* worker) : Event{fd}, iworker_{worker} {
     LOG("create new Channel. fd = {}\n", fd_);
   }
-
   ~Channel() { LOG("Channel destroied. fd = {}\n", fd_); }
 
-  void SetPeer(const std::shared_ptr<Event>& ev) { peer_ = ev; }
-  void SetCache(const std::shared_ptr<Container<0x10000>>& recv,
-                const std::shared_ptr<Container<0x10000>>& send)
+  using CacheContainer = Container<0x20000>;
 
-  {
+  void SetPeer(const std::shared_ptr<Event>& ev) { peer_ = ev; }
+  void SetCache(const std::shared_ptr<CacheContainer>& recv,
+                const std::shared_ptr<CacheContainer>& send) {
     recv_cache_ = recv;
     send_cache_ = send;
   }
@@ -39,32 +38,32 @@ class Channel : public Event {
   const std::shared_ptr<Event> peer() const { return peer_.lock(); }
 
   ssize_t HandleLoop() override {
-    if (send_cache_->size - send_cache_->seek > 0) {
-      ssize_t n =
-          SocketIO::WriteSocket(fd_, {send_cache_->memory + send_cache_->seek,
-                                      send_cache_->size - send_cache_->seek});
-      if (n < 0) {
-        return -1;
-      }
-      send_cache_->seek += n;
-    }
+    if (send_cache_->size <= send_cache_->seek) return 0;
+    ssize_t n =
+        SocketIO::WriteSocket(fd_, {send_cache_->memory + send_cache_->seek,
+                                    send_cache_->size - send_cache_->seek});
+    if (n < 0) return -1;
+    send_cache_->seek += n;
 
     if (send_cache_->size > send_cache_->seek) return 1;
     return 0;
   }
 
+  ssize_t HandleWritable() override {
+    iworker_->epoll().ModEvent(fd_, EPOLLIN);  // do not care epollout
+    if (send_cache_->size > send_cache_->seek) iworker_->AddLoopEvent(fd_);
+    return 0;
+  }
+
   ssize_t HandleReadable() override {
     if (recv_cache_->seek != 0) recv_cache_->Shift();
-    ssize_t n;
-    if (recv_cache_->capacity - recv_cache_->size > 0) {
-      n = SocketIO::ReadSocket(fd_,
-                               {recv_cache_->memory + recv_cache_->size,
-                                recv_cache_->capacity - recv_cache_->size});
-      if (n < 0) {
-        return -1;
-      }
-      recv_cache_->size += n;
-    }
+    if (recv_cache_->capacity <= recv_cache_->size) return 0;
+
+    ssize_t n =
+        SocketIO::ReadSocket(fd_, {recv_cache_->memory + recv_cache_->size,
+                                   recv_cache_->capacity - recv_cache_->size});
+    if (n < 0) return -1;
+    recv_cache_->size += n;
 
     if (!peer_.lock()) return -1;
     if (recv_cache_->size > recv_cache_->seek) {
@@ -84,7 +83,7 @@ class Channel : public Event {
  private:
   std::weak_ptr<Event> peer_;
   IWorker* iworker_;
-  std::shared_ptr<Container<0x10000>> recv_cache_;
-  std::shared_ptr<Container<0x10000>> send_cache_;
+  std::shared_ptr<CacheContainer> recv_cache_;
+  std::shared_ptr<CacheContainer> send_cache_;
 };
 }  // namespace socks5
