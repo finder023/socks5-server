@@ -29,7 +29,10 @@ class Channel : public Event {
 
   using CacheContainer = Container<0x20000>;
 
-  void SetPeer(const std::shared_ptr<Event>& ev) { peer_ = ev; }
+  const char* name() const override { return "Channel"; }
+  EventType   type() const override { return EventType::CHANNEL; }
+
+  void SetPeer(const std::shared_ptr<Channel>& ev) { peer_ = ev; }
   void SetCache(const std::shared_ptr<CacheContainer>& recv,
                 const std::shared_ptr<CacheContainer>& send) {
     recv_cache_ = recv;
@@ -39,7 +42,7 @@ class Channel : public Event {
     encryptor_ = en;
   }
 
-  const std::shared_ptr<Event> peer() const { return peer_.lock(); }
+  const std::shared_ptr<Channel> peer() const { return peer_.lock(); }
 
   ssize_t HandleLoop() override {
     if (send_cache_->size <= send_cache_->seek) return 0;
@@ -54,6 +57,9 @@ class Channel : public Event {
 
   ssize_t HandleWritable() override {
     iworker_->epoll().ModEvent(fd_, EPOLLIN);  // do not care epollout
+    if (!peer_.lock()) return -1;
+    iworker_->epoll().ModEvent(peer_.lock()->fd(),
+                               EPOLLIN);  // register peer in event
     if (send_cache_->size > send_cache_->seek) iworker_->AddLoopEvent(fd_);
     return 0;
   }
@@ -87,7 +93,7 @@ class Channel : public Event {
   }
 
  private:
-  std::weak_ptr<Event>            peer_;
+  std::weak_ptr<Channel>          peer_;
   IWorker*                        iworker_;
   std::shared_ptr<CacheContainer> recv_cache_;
   std::shared_ptr<CacheContainer> send_cache_;

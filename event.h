@@ -7,7 +7,15 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <unistd.h>
+
+enum class EventType : uint8_t {
+  EVENT     = 0,
+  HANDSHAKE = 1,
+  CONFIRM   = 2,
+  CHANNEL   = 3,
+};
 
 class Event {
  public:
@@ -16,6 +24,9 @@ class Event {
     if (fd_) close(fd_);
   }
   const int fd() const { return fd_; }
+
+  virtual const char* name() const { return "event"; }
+  virtual EventType   type() const { return EventType::EVENT; }
 
   virtual ssize_t HandleLoop() { return 0; }
 

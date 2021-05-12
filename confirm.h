@@ -20,6 +20,9 @@ class Confirm : public Event {
   }
   ~Confirm() { LOG("Confirm connection destroied. fd = {}\n", fd_); }
 
+  const char* name() const override { return "Confirm"; }
+  EventType   type() const override { return EventType::CONFIRM; }
+
   std::shared_ptr<Channel> ToChannel();
   ssize_t                  HandleWritable() override;
   ssize_t                  HandleClose() override;

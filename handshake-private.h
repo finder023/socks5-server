@@ -29,6 +29,9 @@ class HandshakePrivate : public Event, public Handshake {
   IWorker*              iworker() override { return iworker_; }
   PrivateRequestHeader* req_header() override { return req_header_; }
 
+  const char* name() const override { return "Handshake"; }
+  EventType   type() const override { return EventType::HANDSHAKE; }
+
   std::shared_ptr<Channel> ToChannel();
   ssize_t                  HandleReadable() override;
   ssize_t                  HandleClose() override;

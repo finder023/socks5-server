@@ -28,6 +28,9 @@ class HandshakeSocks5 : public Event, public Handshake {
   }
   ~HandshakeSocks5() { LOG("destroy Handshake socks5, fd = {}\n", fd_); }
 
+  const char* name() const override { return "Handshake"; }
+  EventType   type() const override { return EventType::HANDSHAKE; }
+
   IWorker*                 iworker() override { return iworker_; }
   std::shared_ptr<Channel> ToChannel();
   void                     ConfirmRemoteConnection() override;

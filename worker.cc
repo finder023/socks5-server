@@ -11,6 +11,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "channel.h"
+
 namespace socks5 {
 
 Worker* Worker::instance_;
@@ -47,6 +49,7 @@ bool Worker::Init() {
 
 void Worker::ProcessLoopEvent() {
   while (!loop_events_.empty()) {
+    // only channel in loop_events_
     auto ev = std::move(loop_events_.front());
     loop_events_.pop();
 
@@ -56,7 +59,18 @@ void Worker::ProcessLoopEvent() {
         AddExceptionEvent(ev->fd());
         break;
       case 1:
-        epoll_.ModEvent(ev, EPOLLIN | EPOLLOUT);
+        if (ev->type() == EventType::CHANNEL) {
+          auto ch      = std::dynamic_pointer_cast<Channel>(ev);
+          auto ch_peer = ch->peer();
+          if (!ch_peer) {
+            AddExceptionEvent(ev->fd());
+            break;
+          }
+          // unwritable, register epollout for writable
+          epoll_.ModEvent(ch, EPOLLIN | EPOLLOUT);
+          // epoll do not care epollin
+          epoll_.ModEvent(ch_peer, 0);
+        }
         break;
       default:
         break;
