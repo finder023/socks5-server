@@ -6,6 +6,8 @@
  */
 #include "confirm.h"
 
+#include "encryptor.h"
+
 namespace socks5 {
 
 std::shared_ptr<Channel> Confirm::ToChannel() {
@@ -22,13 +24,13 @@ ssize_t Confirm::HandleWritable() {
 
   if (hand_shake_->iworker()->deploy() == Deploy::LOCAL) {
     auto     req_header = hand_shake_->req_header();
-    uint64_t len        = sizeof(PrivateRquestHeader) + req_header->addr_len;
+    uint64_t len        = sizeof(PrivateRequestHeader) + req_header->addr_len;
     uint8_t  req_buff[len];
     memcpy(req_buff, req_header, len);
     Buffer tmp{req_buff, len};
 
     if (hand_shake_->iworker()->encrypt()) {
-      // todo
+      Encryptor{}.NaiveEncrypt(tmp);
     }
 
     SocketIO(fd_).Write(tmp);

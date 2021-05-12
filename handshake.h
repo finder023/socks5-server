@@ -21,9 +21,9 @@
 namespace socks5 {
 
 struct Handshake {
-  virtual void                 ConfirmRemoteConnection() = 0;
-  virtual IWorker*             iworker()                 = 0;
-  virtual PrivateRquestHeader* req_header()              = 0;
+  virtual void                  ConfirmRemoteConnection() = 0;
+  virtual IWorker*              iworker()                 = 0;
+  virtual PrivateRequestHeader* req_header()              = 0;
 
   int TcpConnect(const sockaddr_in& sin) {
     int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);

@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "buffer.h"
+#include "encryptor.h"
 #include "event.h"
 #include "iworker.h"
 #include "log.h"
@@ -33,6 +34,9 @@ class Channel : public Event {
                 const std::shared_ptr<CacheContainer>& send) {
     recv_cache_ = recv;
     send_cache_ = send;
+  }
+  void SetEncryptor(const std::shared_ptr<EncryptorBase>& en) {
+    encryptor_ = en;
   }
 
   const std::shared_ptr<Event> peer() const { return peer_.lock(); }
@@ -58,10 +62,14 @@ class Channel : public Event {
     if (recv_cache_->seek != 0) recv_cache_->Shift();
     if (recv_cache_->capacity <= recv_cache_->size) return 0;
 
-    ssize_t n = SocketIO(fd_).Read({recv_cache_->memory + recv_cache_->size,
-                                    recv_cache_->capacity - recv_cache_->size});
+    Buffer  buff{recv_cache_->memory + recv_cache_->size,
+                recv_cache_->capacity - recv_cache_->size};
+    ssize_t n = SocketIO(fd_).Read(buff);
     if (n < 0) return -1;
     recv_cache_->size += n;
+    buff.capacity = n;
+
+    if (iworker_->encrypt()) encryptor_->Process(buff);
 
     if (!peer_.lock()) return -1;
     if (recv_cache_->size > recv_cache_->seek) {
@@ -83,5 +91,6 @@ class Channel : public Event {
   IWorker*                        iworker_;
   std::shared_ptr<CacheContainer> recv_cache_;
   std::shared_ptr<CacheContainer> send_cache_;
+  std::shared_ptr<EncryptorBase>  encryptor_;
 };
 }  // namespace socks5

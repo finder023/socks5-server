@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#pragma once
+
 #include <array>
 #include <string>
 #include <vector>
@@ -14,9 +16,7 @@ class RC4 {
  public:
   RC4(const std::vector<uint8_t>& key) : key_{key}, i_{0}, j_{0} { KSA(); }
 
-  std::vector<uint8_t> DoRC4(const std::vector<uint8_t>& p) {
-    return PRGA(p.data(), p.size());
-  }
+  void DoRC4(uint8_t* p, uint32_t len) { return PRGA(p, len); }
 
   auto& s_box() const { return s_box_; }
 
@@ -35,21 +35,17 @@ class RC4 {
     }
   }
 
-  std::vector<uint8_t>& PRGA(const uint8_t* plaintext, const uint32_t len) {
-    int                         i = i_, j = j_;
-    static std::vector<uint8_t> result;
-    result.clear();
+  void PRGA(uint8_t* plaintext, const uint32_t len) {
+    int i = i_, j = j_;
     for (size_t n = 0; n < len; ++n) {
       i = (i + 1) % N;
       j = (j + s_box_[i]) % N;
       Swap(i, j);
       uint8_t r = s_box_[(s_box_[i] + s_box_[j]) % N];
-      result.push_back(r ^ plaintext[n]);
+      plaintext[n] ^= r;
     }
     i_ = i;
     j_ = j;
-
-    return result;
   }
 
   void Swap(uint32_t i, uint32_t j) {

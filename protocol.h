@@ -77,7 +77,7 @@ struct ResquestReply {
 } __attribute__((packed));
 
 // private protocol
-struct PrivateRquestHeader {
+struct PrivateRequestHeader {
   uint16_t port;
   uint8_t  type;      // 1: ipv4, 2:domain
   uint8_t  addr_len;  // type 1 -> 4. type2 -> variable

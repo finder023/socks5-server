@@ -40,6 +40,7 @@ bool Worker::Init() {
   signal(SIGKILL, SignalHandler);
   signal(SIGUSR1, SignalHandler);
   signal(SIGUSR2, SignalHandler);
+  signal(SIGPIPE, SignalHandler);
 
   return true;
 }
@@ -94,7 +95,7 @@ std::optional<sockaddr_in> Worker::ParseAddress(const std::string& s) {
 }
 
 void Worker::WorkerSignal(int sig) {
-  LOG("signal [{}] captured\n", sig);
+  LOG("signal [{}][{}] captured\n", sig, strsignal(sig));
   switch (sig) {
     case SIGKILL:
     case SIGTERM:

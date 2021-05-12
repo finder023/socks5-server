@@ -23,7 +23,7 @@ class HandshakeSocks5 : public Event, public Handshake {
       : Event{fd},
         status_{0},
         iworker_{worker},
-        req_header_{reinterpret_cast<PrivateRquestHeader*>(req_buffer_)} {
+        req_header_{reinterpret_cast<PrivateRequestHeader*>(req_buffer_)} {
     LOG("create Handshake socks5. fd = {}\n", fd_);
   }
   ~HandshakeSocks5() { LOG("destroy Handshake socks5, fd = {}\n", fd_); }
@@ -31,7 +31,7 @@ class HandshakeSocks5 : public Event, public Handshake {
   IWorker*                 iworker() override { return iworker_; }
   std::shared_ptr<Channel> ToChannel();
   void                     ConfirmRemoteConnection() override;
-  PrivateRquestHeader*     req_header() override { return req_header_; }
+  PrivateRequestHeader*    req_header() override { return req_header_; }
 
  private:
   bool HandleAuth();
@@ -49,8 +49,8 @@ class HandshakeSocks5 : public Event, public Handshake {
   uint32_t req_ip_;
   uint16_t req_port_;
 
-  PrivateRquestHeader*     req_header_;
-  uint8_t                  req_buffer_[sizeof(PrivateRquestHeader) + 256];
+  PrivateRequestHeader*    req_header_;
+  uint8_t                  req_buffer_[sizeof(PrivateRequestHeader) + 256];
   std::shared_ptr<Confirm> confirm_;
 };
 

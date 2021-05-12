@@ -64,6 +64,11 @@ void HandshakeSocks5::ConfirmRemoteConnection() {
   ev1->SetPeer(ev2);
   ev2->SetPeer(ev1);
 
+  if (iworker_->encrypt()) {
+    ev1->SetEncryptor(std::make_shared<Encryptor>(req_header_));
+    ev2->SetEncryptor(std::make_shared<Decryptor>(req_header_));
+  }
+
   auto c1 = std::make_shared<Channel::CacheContainer>();
   auto c2 = std::make_shared<Channel::CacheContainer>();
 

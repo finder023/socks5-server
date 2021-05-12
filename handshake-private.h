@@ -21,13 +21,13 @@ class HandshakePrivate : public Event, public Handshake {
   HandshakePrivate(const int fd, IWorker* iworker)
       : Event{fd},
         iworker_{iworker},
-        req_header_{reinterpret_cast<PrivateRquestHeader*>(req_buffer_)} {
+        req_header_{reinterpret_cast<PrivateRequestHeader*>(req_buffer_)} {
     LOG("create Handshake private. fd = {}\n", fd_);
   }
   ~HandshakePrivate() { LOG("destroy Handshake private. fd = {}\n", fd_); }
 
-  IWorker*             iworker() override { return iworker_; }
-  PrivateRquestHeader* req_header() override { return req_header_; }
+  IWorker*              iworker() override { return iworker_; }
+  PrivateRequestHeader* req_header() override { return req_header_; }
 
   std::shared_ptr<Channel> ToChannel();
   ssize_t                  HandleReadable() override;
@@ -35,9 +35,9 @@ class HandshakePrivate : public Event, public Handshake {
   void                     ConfirmRemoteConnection() override;
 
  private:
-  IWorker*             iworker_;
-  PrivateRquestHeader* req_header_;
-  uint8_t              req_buffer_[sizeof(PrivateRquestHeader) + 256];
+  IWorker*              iworker_;
+  PrivateRequestHeader* req_header_;
+  uint8_t               req_buffer_[sizeof(PrivateRequestHeader) + 256];
 
   std::shared_ptr<Confirm> confirm_;
 };

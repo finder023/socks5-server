@@ -57,14 +57,18 @@ ssize_t Listener::HandleReadable() {
   LOG("accept from {}:{}. fd = {}\n", inet_ntoa(sin.sin_addr),
       ntohs(sin.sin_port), fd);
 
-  if (iworker_->protocol() == Protocol::SOCKS5) {
-    auto hand_shake = std::make_shared<HandshakeSocks5>(fd, iworker_);
+  if (iworker_->deploy() == Deploy::SERVER) {
+    // server only support private protocol
+    auto hand_shake = std::make_shared<HandshakePrivate>(fd, iworker_);
     iworker_->AddEvent(hand_shake);
     iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
+    return 0;
   }
 
-  if (iworker_->protocol() == Protocol::PRIVATE) {
-    auto hand_shake = std::make_shared<HandshakePrivate>(fd, iworker_);
+  // local
+  if (iworker_->protocol() == Protocol::SOCKS5) {
+    // local socks5 support
+    auto hand_shake = std::make_shared<HandshakeSocks5>(fd, iworker_);
     iworker_->AddEvent(hand_shake);
     iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
   }

@@ -14,15 +14,15 @@ ssize_t HandshakePrivate::HandleReadable() {
   int         fd  = 0;
   sockaddr_in sin = {0};
 
-  Buffer req_buffer{req_buffer_, sizeof(PrivateRquestHeader)};
+  Buffer req_buffer{req_buffer_, sizeof(PrivateRequestHeader)};
   SocketIO(fd_).Read(req_buffer);
-  Buffer addr_payload{req_buffer_ + sizeof(PrivateRquestHeader),
+  Buffer addr_payload{req_buffer_ + sizeof(PrivateRequestHeader),
                       req_header_->addr_len};
   SocketIO(fd_).Read(addr_payload);
 
   Buffer req_payload{req_buffer_, req_buffer.capacity + addr_payload.capacity};
   if (iworker_->encrypt()) {
-    // do encrypt
+    Decryptor{}.NaiveDecrypt(req_payload);
   }
 
   if (req_header_->type == 1) {
@@ -71,8 +71,8 @@ void HandshakePrivate::ConfirmRemoteConnection() {
   auto ev2 = confirm_->ToChannel();
 
   if (iworker_->encrypt()) {
-    // ev1->SetEncry(std::make_shared<Encryptor>(req_header_));
-    // ev2->SetEncry(std::make_shared<Encryptor>(req_header_));
+    ev1->SetEncryptor(std::make_shared<Decryptor>(req_header_));
+    ev2->SetEncryptor(std::make_shared<Encryptor>(req_header_));
   }
 
   auto c1 = std::make_shared<Channel::CacheContainer>();
