@@ -8,7 +8,7 @@
 #include "worker.h"
 
 int main(int argc, char** argv) {
-  std::string      listen, deploy_str, protocol_str, encrypt_str;
+  std::string      listen, deploy_str, protocol_str, encrypt_str, remote_str;
   int              c;
   socks5::Deploy   deploy   = socks5::Deploy::LOCAL;
   socks5::Protocol protocol = socks5::Protocol::SOCKS5;
@@ -17,15 +17,19 @@ int main(int argc, char** argv) {
   const char* usage =
       "Usage:\n"
       "  -l listen -> ip:port\n"
+      "  -r remote -> ip:port\n"
       "  -d deploy -> local/server\n"
       "  -p protocol -> socks5/private\n"
       "  -e encrypt -> true/false\n"
       "  -h help\n";
 
-  while ((c = getopt(argc, argv, "l:hd:p:e:")) != -1) {
+  while ((c = getopt(argc, argv, "l:r:hd:p:e:")) != -1) {
     switch (c) {
       case 'l':
         listen = optarg;
+        break;
+      case 'r':
+        remote_str = optarg;
         break;
       case 'd':
         deploy_str = optarg;
@@ -49,6 +53,7 @@ int main(int argc, char** argv) {
         LOG("Invalid opt\n");
     }
   }
-  return std::make_unique<socks5::Worker>(listen, deploy, protocol, encrypt)
+  return std::make_unique<socks5::Worker>(listen, remote_str, deploy, protocol,
+                                          encrypt)
       ->Run();
 }

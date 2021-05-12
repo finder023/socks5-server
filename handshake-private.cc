@@ -10,7 +10,9 @@
 namespace socks5 {
 
 ssize_t HandshakePrivate::HandleReadable() {
-  if (remote_addr_ready_) return 0;
+  uint32_t    ip  = 0;
+  int         fd  = 0;
+  sockaddr_in sin = {0};
 
   Buffer req_buffer{req_buffer_, sizeof(PrivateRquestHeader)};
   SocketIO(fd_).Read(req_buffer);
@@ -23,19 +25,16 @@ ssize_t HandshakePrivate::HandleReadable() {
     // do encrypt
   }
 
-  remote_addr_ready_ = true;
-  uint32_t ip        = 0;
   if (req_header_->type == 1) {
     ip = *reinterpret_cast<uint32_t*>(req_header_->address);
   } else if (req_header_->type == 2) {
-    // domain
-    uint32_t ip = Domain2Ip(req_header_->address, req_header_->addr_len);
+    // query domain
+    ip = QueryDNS(req_header_->address, req_header_->addr_len);
     if (ip <= 0) return -1;
     LOG("read {} target addr: {}:{}\n", req_header_->address,
         inet_ntoa(in_addr{ip}), ntohs(uint16_t(req_header_->port)));
   }
 
-  sockaddr_in sin;
   sin.sin_family      = AF_INET;
   sin.sin_addr.s_addr = ip;
   sin.sin_port        = req_header_->port;
@@ -43,7 +42,7 @@ ssize_t HandshakePrivate::HandleReadable() {
   // remote connction 不再关注可读，后续读写交给channel
   iworker_->epoll().DelEvent(fd_);
 
-  int fd = TcpConnect(sin);
+  fd = TcpConnect(sin);
   if (fd <= 0) return -1;
   // wait for confirm connection
   confirm_ = std::make_shared<Confirm>(fd, this);
@@ -67,7 +66,7 @@ ssize_t HandshakePrivate::HandleClose() {
 }
 
 void HandshakePrivate::ConfirmRemoteConnection() {
-  LOG("confirm connection. fd = {}\n", fd_);
+  LOG("confirm connection. fd = {}, req_fd = {}\n", fd_, confirm_->fd());
   auto ev1 = this->ToChannel();
   auto ev2 = confirm_->ToChannel();
 
@@ -75,6 +74,12 @@ void HandshakePrivate::ConfirmRemoteConnection() {
     // ev1->SetEncry(std::make_shared<Encryptor>(req_header_));
     // ev2->SetEncry(std::make_shared<Encryptor>(req_header_));
   }
+
+  auto c1 = std::make_shared<Channel::CacheContainer>();
+  auto c2 = std::make_shared<Channel::CacheContainer>();
+
+  ev1->SetCache(c1, c2);
+  ev2->SetCache(c2, c1);
 
   ev1->SetPeer(ev2);
   ev2->SetPeer(ev1);

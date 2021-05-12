@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "channel.h"
+#include "handshake-private.h"
 #include "handshake-socks5.h"
 #include "log.h"
 
@@ -56,10 +57,18 @@ ssize_t Listener::HandleReadable() {
   LOG("accept from {}:{}. fd = {}\n", inet_ntoa(sin.sin_addr),
       ntohs(sin.sin_port), fd);
 
-  auto hand_shake = std::make_shared<HandshakeSocks5>(fd, iworker_);
+  if (iworker_->protocol() == Protocol::SOCKS5) {
+    auto hand_shake = std::make_shared<HandshakeSocks5>(fd, iworker_);
+    iworker_->AddEvent(hand_shake);
+    iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
+  }
 
-  iworker_->AddEvent(hand_shake);
-  iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
+  if (iworker_->protocol() == Protocol::PRIVATE) {
+    auto hand_shake = std::make_shared<HandshakePrivate>(fd, iworker_);
+    iworker_->AddEvent(hand_shake);
+    iworker_->epoll().AddEvent(hand_shake, EPOLLIN);
+  }
+
   return 0;
 }
 

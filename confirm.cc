@@ -18,11 +18,25 @@ ssize_t Confirm::HandleWritable() {
   uint32_t  val;
   socklen_t len = sizeof(val);
   getsockopt(fd_, SOL_SOCKET, SO_ERROR, &val, &len);
-  if (val == 0) {
-    hand_shake_->ConfirmRemoteConnection();
-    return 0;
+  if (val != 0) return -1;
+
+  if (hand_shake_->iworker()->deploy() == Deploy::LOCAL) {
+    auto     req_header = hand_shake_->req_header();
+    uint64_t len        = sizeof(PrivateRquestHeader) + req_header->addr_len;
+    uint8_t  req_buff[len];
+    memcpy(req_buff, req_header, len);
+    Buffer tmp{req_buff, len};
+
+    if (hand_shake_->iworker()->encrypt()) {
+      // todo
+    }
+
+    SocketIO(fd_).Write(tmp);
+    LOG("write {} target: {}\n", fd_, (char*)req_header->address);
   }
-  return val;
+
+  hand_shake_->ConfirmRemoteConnection();
+  return 0;
 }
 
 ssize_t Confirm::HandleClose() {

@@ -16,12 +16,14 @@
 
 #include "iworker.h"
 #include "log.h"
+#include "protocol.h"
 
 namespace socks5 {
 
 struct Handshake {
-  virtual void     ConfirmRemoteConnection() = 0;
-  virtual IWorker* iworker()                 = 0;
+  virtual void                 ConfirmRemoteConnection() = 0;
+  virtual IWorker*             iworker()                 = 0;
+  virtual PrivateRquestHeader* req_header()              = 0;
 
   int TcpConnect(const sockaddr_in& sin) {
     int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -36,7 +38,7 @@ struct Handshake {
     return fd;
   }
 
-  uint32_t Domain2Ip(const char* domain, const uint32_t len) {
+  uint32_t QueryDNS(const char* domain, const uint32_t len) {
     char     name_buff[256] = {0};
     uint32_t result;
 

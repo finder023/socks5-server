@@ -44,7 +44,7 @@ std::shared_ptr<Channel> HandshakeSocks5::ToChannel() {
 }
 
 void HandshakeSocks5::ConfirmRemoteConnection() {
-  LOG("confirm connection, fd = {}, req_fd = {}\n", fd_, req_fd_);
+  LOG("confirm connection, fd = {}, req_fd = {}\n", fd_, confirm_->fd());
   ResquestReplyIpv4 reply{.ver      = 5,
                           .rep      = 0,
                           .rsv      = 0,
@@ -124,13 +124,21 @@ bool HandshakeSocks5::ParseRemoteAddr() {
   }
 
   if (req->address_type == 1) {  // ipv4 addr
-    memcpy(reinterpret_cast<void*>(&req_ip_), req->dest_addr, sizeof(req_ip_));
-    memcpy(reinterpret_cast<void*>(&req_port_), req->dest_addr + 4,
-           sizeof(req_port_));
+    if (iworker_->deploy() == Deploy::SERVER) {
+      memcpy(&req_ip_, req->dest_addr, sizeof(req_ip_));
+      memcpy(&req_port_, req->dest_addr + 4, sizeof(req_port_));
+    } else if (iworker_->deploy() == Deploy::LOCAL) {
+      memcpy(&req_header_->address, req->dest_addr, 4);
+      memcpy(&req_header_->port, req->dest_addr + 4, 2);
+      req_header_->type      = 1;
+      req_header_->fd        = fd_;
+      req_header_->addr_len  = 4;
+      req_header_->timestamp = time(nullptr);
+    }
   } else if (req->address_type == 3) {
     if (iworker_->deploy() == Deploy::SERVER) {
-      req_ip_ = Domain2Ip(reinterpret_cast<char*>(req->dest_addr) + 1,
-                          req->dest_addr[0]);
+      req_ip_ = QueryDNS(reinterpret_cast<char*>(req->dest_addr) + 1,
+                         req->dest_addr[0]);
       if (req_ip_ < 0) return false;
       memcpy(&req_port_, req->dest_addr + 1 + req->dest_addr[0],
              sizeof(req_port_));
@@ -172,14 +180,15 @@ bool HandshakeSocks5::HandleResquest() {
     sin = iworker_->static_addr();
   }
 
-  if ((req_fd_ = TcpConnect(sin)) <= 0) {
+  int fd;
+  if ((fd = TcpConnect(sin)) <= 0) {
     reply.rep = 1;
     if (SocketIO(fd_).Write(
             {reinterpret_cast<uint8_t*>(&reply), sizeof(reply)}) < 0)
       return false;
   }
 
-  confirm_ = std::make_shared<Confirm>(req_fd_, this);
+  confirm_ = std::make_shared<Confirm>(fd, this);
   iworker_->epoll().DelEvent(fd_);  // wait for connction confirm.
 
   iworker_->AddEvent(confirm_);

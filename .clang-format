@@ -1,9 +1,7 @@
 BasedOnStyle: Google
 ColumnLimit: 80
-
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
-AlignConsecutiveMacros: true
 AlignEscapedNewlines: Right
 AlignTrailingComments: true
 DerivePointerAlignment: false

@@ -21,13 +21,13 @@ class HandshakePrivate : public Event, public Handshake {
   HandshakePrivate(const int fd, IWorker* iworker)
       : Event{fd},
         iworker_{iworker},
-        req_header_{reinterpret_cast<PrivateRquestHeader*>(req_buffer_)},
-        remote_addr_ready_{false} {
+        req_header_{reinterpret_cast<PrivateRquestHeader*>(req_buffer_)} {
     LOG("create Handshake private. fd = {}\n", fd_);
   }
   ~HandshakePrivate() { LOG("destroy Handshake private. fd = {}\n", fd_); }
 
-  IWorker* iworker() override { return iworker_; }
+  IWorker*             iworker() override { return iworker_; }
+  PrivateRquestHeader* req_header() override { return req_header_; }
 
   std::shared_ptr<Channel> ToChannel();
   ssize_t                  HandleReadable() override;
@@ -38,7 +38,6 @@ class HandshakePrivate : public Event, public Handshake {
   IWorker*             iworker_;
   PrivateRquestHeader* req_header_;
   uint8_t              req_buffer_[sizeof(PrivateRquestHeader) + 256];
-  bool                 remote_addr_ready_;
 
   std::shared_ptr<Confirm> confirm_;
 };
