@@ -23,8 +23,10 @@ enum class Deploy : uint8_t {
 };
 
 enum class Protocol : uint8_t {
-  SOCKS5  = 1,
-  PRIVATE = 2,
+  PRIVATE = 1,
+  SOCKS5  = 2,
+  PASS    = 3,
+  SS      = 4,
 };
 
 class IWorker {

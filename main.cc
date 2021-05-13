@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
       "  -l listen -> ip:port\n"
       "  -r remote -> ip:port\n"
       "  -d deploy -> local/server\n"
-      "  -p protocol -> socks5/private\n"
+      "  -p protocol -> socks5/private/pass\n"
       "  -e encrypt -> true/false\n"
       "  -h help\n";
 
@@ -40,6 +40,8 @@ int main(int argc, char** argv) {
         protocol_str = optarg;
         if (protocol_str == "socks5") protocol = socks5::Protocol::SOCKS5;
         if (protocol_str == "private") protocol = socks5::Protocol::PRIVATE;
+        if (protocol_str == "pass") protocol = socks5::Protocol::PASS;
+        if (protocol_str == "ss") protocol = socks5::Protocol::SS;
         break;
       case 'e':
         encrypt_str = optarg;

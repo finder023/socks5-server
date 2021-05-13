@@ -22,7 +22,9 @@ ssize_t Confirm::HandleWritable() {
   getsockopt(fd_, SOL_SOCKET, SO_ERROR, &val, &len);
   if (val != 0) return -1;
 
-  if (hand_shake_->iworker()->deploy() == Deploy::LOCAL) {
+  IWorker* iworker = hand_shake_->iworker();
+  if (iworker->deploy() == Deploy::LOCAL &&
+      iworker->protocol() == Protocol::SOCKS5) {
     auto     req_header = hand_shake_->req_header();
     uint64_t len        = sizeof(PrivateRequestHeader) + req_header->addr_len;
     uint8_t  req_buff[len];

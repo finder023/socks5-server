@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}
   listener.cc 
   handshake-socks5.cc 
   handshake-private.cc
+  handshake-pass.cc
   confirm.cc
 )
 
