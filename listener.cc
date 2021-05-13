@@ -17,6 +17,7 @@
 #include "handshake-pass.h"
 #include "handshake-private.h"
 #include "handshake-socks5.h"
+#include "handshake-ss.h"
 #include "log.h"
 
 namespace socks5 {
@@ -59,9 +60,15 @@ ssize_t Listener::HandleReadable() {
       ntohs(sin.sin_port), fd);
 
   std::shared_ptr<Event> hand_shake;
-  if (iworker_->deploy() == Deploy::SERVER) {
+  if (iworker_->deploy() == Deploy::SERVER and
+      iworker_->protocol() == Protocol::PRIVATE) {
     // server only support private protocol
     hand_shake = std::make_shared<HandshakePrivate>(fd, iworker_);
+  }
+
+  if (iworker_->deploy() == Deploy::SERVER and
+      iworker_->protocol() == Protocol::SS) {
+    hand_shake = std::make_shared<HandshakeSS>(fd, iworker_);
   }
 
   // local
@@ -75,6 +82,12 @@ ssize_t Listener::HandleReadable() {
       iworker_->protocol() == Protocol::PASS) {
     // local pass through
     hand_shake = std::make_shared<HandshakePass>(fd, iworker_);
+  }
+
+  if (iworker_->deploy() == Deploy::LOCAL and
+      iworker_->protocol() == Protocol::SS) {
+    // local ss support
+    hand_shake = std::make_shared<HandshakeSS>(fd, iworker_);
   }
 
   iworker_->AddEvent(hand_shake);

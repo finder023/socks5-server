@@ -24,7 +24,8 @@ ssize_t Confirm::HandleWritable() {
 
   IWorker* iworker = hand_shake_->iworker();
   if (iworker->deploy() == Deploy::LOCAL &&
-      iworker->protocol() == Protocol::SOCKS5) {
+      (iworker->protocol() == Protocol::SOCKS5 ||
+       iworker->protocol() == Protocol::SS)) {
     auto     req_header = hand_shake_->req_header();
     uint64_t len        = sizeof(PrivateRequestHeader) + req_header->addr_len;
     uint8_t  req_buff[len];

@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
       "  -l listen -> ip:port\n"
       "  -r remote -> ip:port\n"
       "  -d deploy -> local/server\n"
-      "  -p protocol -> socks5/private/pass\n"
+      "  -p protocol -> socks5/private/pass/ss\n"
       "  -e encrypt -> true/false\n"
       "  -h help\n";
 

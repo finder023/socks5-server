@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME}
   handshake-socks5.cc 
   handshake-private.cc
   handshake-pass.cc
+  handshake-ss.cc
   confirm.cc
 )
 
