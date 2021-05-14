@@ -60,34 +60,19 @@ ssize_t Listener::HandleReadable() {
       ntohs(sin.sin_port), fd);
 
   std::shared_ptr<Event> hand_shake;
-  if (iworker_->deploy() == Deploy::SERVER and
-      iworker_->protocol() == Protocol::PRIVATE) {
-    // server only support private protocol
-    hand_shake = std::make_shared<HandshakePrivate>(fd, iworker_);
-  }
-
-  if (iworker_->deploy() == Deploy::SERVER and
-      iworker_->protocol() == Protocol::SS) {
-    hand_shake = std::make_shared<HandshakeSS>(fd, iworker_);
-  }
-
-  // local
-  if (iworker_->deploy() == Deploy::LOCAL and
-      iworker_->protocol() == Protocol::SOCKS5) {
-    // local socks5 support
-    hand_shake = std::make_shared<HandshakeSocks5>(fd, iworker_);
-  }
-
-  if (iworker_->deploy() == Deploy::LOCAL and
-      iworker_->protocol() == Protocol::PASS) {
-    // local pass through
-    hand_shake = std::make_shared<HandshakePass>(fd, iworker_);
-  }
-
-  if (iworker_->deploy() == Deploy::LOCAL and
-      iworker_->protocol() == Protocol::SS) {
-    // local ss support
-    hand_shake = std::make_shared<HandshakeSS>(fd, iworker_);
+  switch (iworker_->protocol()) {
+    case Protocol::SOCKS5:
+      hand_shake = std::make_shared<HandshakeSocks5>(fd, iworker_);
+      break;
+    case Protocol::PRIVATE:
+      hand_shake = std::make_shared<HandshakePrivate>(fd, iworker_);
+      break;
+    case Protocol::PASS:
+      hand_shake = std::make_shared<HandshakePass>(fd, iworker_);
+      break;
+    case Protocol::SS:
+      hand_shake = std::make_shared<HandshakeSS>(fd, iworker_);
+      break;
   }
 
   iworker_->AddEvent(hand_shake);
