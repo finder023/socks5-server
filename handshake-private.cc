@@ -15,10 +15,10 @@ ssize_t HandshakePrivate::HandleReadable() {
   sockaddr_in sin = {0};
 
   Buffer req_buffer{req_buffer_, sizeof(PrivateRequestHeader)};
-  SocketIO(fd_).Read(req_buffer);
+  if (SocketIO(fd_).Read(req_buffer) < 0) return -1;
   Buffer addr_payload{req_buffer_ + sizeof(PrivateRequestHeader),
                       req_header_->addr_len};
-  SocketIO(fd_).Read(addr_payload);
+  if (SocketIO(fd_).Read(addr_payload) < 0) return -1;
 
   Buffer req_payload{req_buffer_, req_buffer.capacity + addr_payload.capacity};
   if (iworker_->encrypt()) {
