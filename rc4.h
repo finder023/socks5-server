@@ -16,12 +16,10 @@ class RC4 {
  public:
   RC4(const std::vector<uint8_t>& key) : key_{key}, i_{0}, j_{0} { KSA(); }
 
-  void DoRC4(uint8_t* p, uint32_t len) { return PRGA(p, len); }
-
-  auto& s_box() const { return s_box_; }
-
- private:
   static constexpr uint32_t N = 256;
+
+  void DoRC4(uint8_t* p, uint32_t len) { return PRGA(p, len); }
+  const std::array<uint8_t, N>& s_box() const { return s_box_; }
 
   void KSA() {
     for (uint32_t i = 0; i < N; ++i) {

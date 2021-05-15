@@ -7,15 +7,16 @@
 
 #pragma once
 
-#include <fmt/format.h>
-#include <fmt/ranges.h>
+#include <stdio.h>
 
 #ifdef DEBUG
 
-#define LOG(...) fmt::print(__VA_ARGS__)
+#define LOG(...) printf(__VA_ARGS__)
+#define LOG_ERR(...) fprintf(stderr, __VA_ARGS__)
 
 #else
 
 #define LOG(...)
+#define LOG_ERR(...)
 
 #endif

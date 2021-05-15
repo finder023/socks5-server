@@ -25,19 +25,19 @@ namespace socks5 {
 bool Listener::StartListener() {
   int fd = socket(AF_INET, SOCK_STREAM, 0);
   if (fd <= 0) {
-    LOG(stderr, "call socket failed. err = {}\n", strerror(errno));
+    LOG_ERR("call socket failed. err = %s\n", strerror(errno));
     return false;
   }
 
   if (bind(fd, reinterpret_cast<const sockaddr*>(&listen_), sizeof(listen_)) !=
       0) {
-    LOG(stderr, "call bind failed. err = {}\n", strerror(errno));
+    LOG_ERR("call bind failed. err = %s\n", strerror(errno));
     close(fd);
     return false;
   }
 
   if (listen(fd, 1024) != 0) {
-    LOG(stderr, "call listen failed. err = {}\n", strerror(errno));
+    LOG_ERR("call listen failed. err = %s\n", strerror(errno));
     close(fd);
     return false;
   }
@@ -52,11 +52,11 @@ ssize_t Listener::HandleReadable() {
 
   int fd = accept4(fd_, reinterpret_cast<sockaddr*>(&sin), &len, SOCK_NONBLOCK);
   if (fd <= 0) {
-    LOG(stderr, "failed to call accept. err = {}\n", strerror(errno));
+    LOG_ERR("failed to call accept. err = %s\n", strerror(errno));
     return -1;
   }
 
-  LOG("accept from {}:{}. fd = {}\n", inet_ntoa(sin.sin_addr),
+  LOG("accept from %s:%d. fd = %d\n", inet_ntoa(sin.sin_addr),
       ntohs(sin.sin_port), fd);
 
   std::shared_ptr<Event> hand_shake;

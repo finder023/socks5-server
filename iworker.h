@@ -34,9 +34,11 @@ class IWorker {
   IWorker() : epoll_{events_} {}
   virtual ~IWorker() { events_.clear(); }
 
-  auto& epoll() { return epoll_; }
-  auto& events() { return events_; }
-  void  AddEvent(const std::shared_ptr<Event>& ev) { events_[ev->fd()] = ev; }
+  static constexpr uint32_t MAX_EVENTS = 65536;
+
+  Epoll<MAX_EVENTS>&                               epoll() { return epoll_; }
+  std::unordered_map<int, std::shared_ptr<Event>>& events() { return events_; }
+  void AddEvent(const std::shared_ptr<Event>& ev) { events_[ev->fd()] = ev; }
   std::shared_ptr<Event>& event(const int fd) { return events_[fd]; }
 
   void AddLoopEvent(const int fd) {
@@ -50,9 +52,6 @@ class IWorker {
   virtual bool        encrypt() const                 = 0;
   virtual sockaddr_in static_addr() const             = 0;
   virtual void        AddExceptionEvent(const int fd) = 0;
-
- public:
-  static constexpr uint32_t MAX_EVENTS = 65536;
 
  protected:
   Epoll<MAX_EVENTS>                               epoll_;

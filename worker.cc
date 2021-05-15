@@ -20,16 +20,14 @@ Worker* Worker::instance_;
 bool Worker::Init() {
   if (!epoll_.Init()) return false;
 
-  auto listen_sin = ParseAddress(listen_);
-  if (!listen_sin) return false;
+  sockaddr_in listen_sin = {0};
+  if (!ParseAddress(listen_, &listen_sin)) return false;
 
   if (deploy() == Deploy::LOCAL) {
-    auto remote_sin = ParseAddress(remote_);
-    if (!remote_sin) return false;
-    remote_sin_ = *remote_sin;
+    if (!ParseAddress(remote_, &remote_sin_)) return false;
   }
 
-  listener_ = std::make_shared<Listener>(*listen_sin, this);
+  listener_ = std::make_shared<Listener>(listen_sin, this);
   if (!listener_) return false;
   if (!listener_->StartListener()) return false;
 
@@ -96,20 +94,19 @@ void Worker::AddExceptionEvent(const int fd) {
   events_.erase(fd);
 }
 
-std::optional<sockaddr_in> Worker::ParseAddress(const std::string& s) {
+bool Worker::ParseAddress(const std::string& s, sockaddr_in* sin) {
   auto pos = s.find(':');
-  if (pos == s.npos) return std::nullopt;
-  std::string ip   = {s.begin(), s.begin() + pos};
-  std::string port = {s.begin() + pos + 1, s.end()};
-  sockaddr_in sin;
-  sin.sin_addr.s_addr = inet_addr(ip.c_str());
-  sin.sin_port        = htons(std::atoi(port.c_str()));
-  sin.sin_family      = AF_INET;
-  return sin;
+  if (pos == s.npos) return false;
+  std::string ip       = {s.begin(), s.begin() + pos};
+  std::string port     = {s.begin() + pos + 1, s.end()};
+  sin->sin_addr.s_addr = inet_addr(ip.c_str());
+  sin->sin_port        = htons(std::atoi(port.c_str()));
+  sin->sin_family      = AF_INET;
+  return true;
 }
 
 void Worker::WorkerSignal(int sig) {
-  LOG("signal [{}][{}] captured\n", sig, strsignal(sig));
+  LOG("signal [%d][%s] captured\n", sig, strsignal(sig));
   switch (sig) {
     case SIGKILL:
     case SIGTERM:

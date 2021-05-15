@@ -24,21 +24,21 @@ ssize_t HandshakeSS::HandleReadable() {
   uint8_t buff[256] = {0};
   Buffer  tmp{buff, 1};
   uint8_t name_len;
-  SocketIO(fd_).Read(tmp);
+  if (SocketIO(fd_).Read(tmp) < 0) return -1;
   uint8_t type = *buff;
   if (type == 1) {
     tmp = {buff, 6};
-    SocketIO(fd_).Read(tmp);
+    if (SocketIO(fd_).Read(tmp) < 0) return -1;
     req_ip_   = *reinterpret_cast<uint32_t*>(buff);
     req_port_ = *reinterpret_cast<uint16_t*>(buff + 4);
   } else if (type == 3) {
     tmp = {buff, 1};
-    SocketIO(fd_).Read(tmp);
+    if (SocketIO(fd_).Read(tmp) < 0) return -1;
     name_len = *buff;
     tmp      = {buff, static_cast<uint64_t>(name_len) + 2};
-    SocketIO(fd_).Read(tmp);
+    if (SocketIO(fd_).Read(tmp) < 0) return -1;
     memcpy(domain_, buff, name_len);
-    LOG("{} read domain: {}\n", fd_, domain_);
+    LOG("%d read domain: %s\n", fd_, domain_);
     req_port_ = *reinterpret_cast<uint16_t*>(buff + name_len);
   } else {
     // not support
@@ -59,7 +59,7 @@ ssize_t HandshakeSS::HandleReadable() {
       if (req_ip_ < 0) return -1;
 
       sin.sin_addr.s_addr = req_ip_;
-      LOG("domain target: {}:{}\n", domain_,
+      LOG("domain %s target: %s:%d\n", domain_,
           inet_ntoa(*reinterpret_cast<in_addr*>(&req_ip_)), ntohs(req_port_));
     }
 
@@ -105,7 +105,7 @@ ssize_t HandshakeSS::HandleClose() {
 }
 
 void HandshakeSS::ConfirmRemoteConnection() {
-  LOG("confirm connection. fd = {}, req_fd = {}\n", fd_, confirm_->fd());
+  LOG("confirm connection. fd = %d, req_fd = %d\n", fd_, confirm_->fd());
   auto ev1 = this->ToChannel();
   auto ev2 = confirm_->ToChannel();
 

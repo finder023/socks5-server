@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include <memory>
+
 enum class EventType : uint8_t {
   EVENT     = 0,
   HANDSHAKE = 1,

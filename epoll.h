@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include <string.h>
 #include <sys/epoll.h>
 
 #include <array>
@@ -25,7 +26,7 @@ class Epoll {
 
   bool Init() {
     if ((epoll_fd_ = epoll_create(S)) <= 0) {
-      LOG(stderr, "call epoll_create failed. err = {}\n", strerror(errno));
+      LOG_ERR("call epoll_create failed. err = %s\n", strerror(errno));
       return false;
     }
 
@@ -33,17 +34,17 @@ class Epoll {
   }
 
   bool AddEvent(const std::shared_ptr<Event>& event,
-                uint32_t flag = EPOLLIN | EPOLLOUT) {
+                uint32_t                      flag = EPOLLIN | EPOLLOUT) {
     if (event->fd() >= S || event->fd() <= 0) {
       return false;
     }
 
     epoll_event ev;
     ev.data.fd = event->fd();
-    ev.events = flag;
+    ev.events  = flag;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, event->fd(), &ev) == -1) {
-      LOG(stderr, "call epoll_ctl add failed. fd = {}, err = {}\n", event->fd(),
-          strerror(errno));
+      LOG_ERR("call epoll_ctl add failed. fd = %d, err = %s\n", event->fd(),
+              strerror(errno));
       return false;
     }
 
@@ -56,8 +57,8 @@ class Epoll {
     epoll_event ev;
     ev.data.fd = fd;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, &ev) == -1) {
-      LOG(stderr, "call epoll_ctl del failed. fd = {}, err = {}\n", fd,
-          strerror(errno));
+      LOG_ERR("call epoll_ctl del failed. fd = %d, err = %s\n", fd,
+              strerror(errno));
       return false;
     }
 
@@ -81,10 +82,10 @@ class Epoll {
 
     epoll_event ev;
     ev.data.fd = event->fd();
-    ev.events = flag;
+    ev.events  = flag;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, event->fd(), &ev) == -1) {
-      LOG(stderr, "call epoll_ctl mod failed. fd = {}, err = {}\n", event->fd(),
-          strerror(errno));
+      LOG_ERR("call epoll_ctl mod failed. fd = %d, err = %s\n", event->fd(),
+              strerror(errno));
       return false;
     }
 
@@ -94,13 +95,13 @@ class Epoll {
   bool Wait(int timeout) {
     int nfd = epoll_wait(epoll_fd_, epoll_events_, S, timeout);
     if (nfd == -1) {
-      LOG(stderr, "call epoll_wait failed. err = {}\n", strerror(errno));
+      LOG_ERR("call epoll_wait failed. err = %s\n", strerror(errno));
       return false;
     }
 
     for (int i = 0; i < nfd; ++i) {
-      epoll_event* ev = epoll_events_ + i;
-      auto ev_it = events_.find(ev->data.fd);
+      epoll_event* ev    = epoll_events_ + i;
+      auto         ev_it = events_.find(ev->data.fd);
       if (ev_it == events_.end()) continue;
       auto&& event = ev_it->second;
 

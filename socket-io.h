@@ -26,12 +26,11 @@ class SocketIO {
       if (n < 0) {
         if (errno == EINTR) continue;
         if (errno == EWOULDBLOCK) break;
-        LOG(stderr, "read socket err. fd = {}, err = {}\n", fd_,
-            strerror(errno));
+        LOG_ERR("read socket err. fd = %d, err = %s\n", fd_, strerror(errno));
         return -1;
       }
       if (n == 0) {
-        LOG("read socket closed. fd = {}\n", fd_);
+        LOG("read socket closed. fd = %d\n", fd_);
         return -1;
       }
       n_read += n;
@@ -46,12 +45,11 @@ class SocketIO {
       if (n < 0) {
         if (errno == EINTR) continue;
         if (errno == EWOULDBLOCK) break;
-        LOG(stderr, "write socker err. fd = {}, err = {}\n", fd_,
-            strerror(errno));
+        LOG_ERR("write socker err. fd = %d, err = %s\n", fd_, strerror(errno));
         return -1;
       }
       if (n == 0) {
-        LOG("write socket closed. fd = {}\n", fd_);
+        LOG("write socket closed. fd = %d\n", fd_);
         return -1;
       }
       n_write += n;

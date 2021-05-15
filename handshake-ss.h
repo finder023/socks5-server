@@ -21,9 +21,9 @@ class HandshakeSS : public Event, public Handshake {
       : Event{fd},
         iworker_{iworker},
         req_header_{reinterpret_cast<PrivateRequestHeader*>(req_buffer_)} {
-    LOG("create Handshake ss. fd = {}\n", fd_);
+    LOG("create Handshake ss. fd = %d\n", fd_);
   }
-  ~HandshakeSS() { LOG("destroy Handshake ss. fd = {}\n", fd_); }
+  ~HandshakeSS() { LOG("destroy Handshake ss. fd = %d\n", fd_); }
 
   IWorker*              iworker() override { return iworker_; }
   PrivateRequestHeader* req_header() override { return req_header_; }

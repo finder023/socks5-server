@@ -5,6 +5,8 @@
  * @date 2021-04-18
  */
 
+#include <memory>
+
 #include "worker.h"
 
 int main(int argc, char** argv) {
@@ -55,7 +57,7 @@ int main(int argc, char** argv) {
         LOG("Invalid opt\n");
     }
   }
-  return std::make_unique<socks5::Worker>(listen, remote_str, deploy, protocol,
-                                          encrypt)
+  return std::unique_ptr<socks5::Worker>(
+             new socks5::Worker(listen, remote_str, deploy, protocol, encrypt))
       ->Run();
 }

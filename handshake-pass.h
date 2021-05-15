@@ -18,9 +18,9 @@ namespace socks5 {
 class HandshakePass : public Event, public Handshake {
  public:
   HandshakePass(const int fd, IWorker* iworker) : Event{fd}, iworker_{iworker} {
-    LOG("create Handshake pass. fd = {}\n", fd_);
+    LOG("create Handshake pass. fd = %d\n", fd_);
   }
-  ~HandshakePass() { LOG("destroy Handshake pass. fd = {}\n", fd_); }
+  ~HandshakePass() { LOG("destroy Handshake pass. fd = %d\n", fd_); }
 
   IWorker*              iworker() override { return iworker_; }
   PrivateRequestHeader* req_header() override { return nullptr; }

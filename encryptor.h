@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <netinet/in.h>
+
 #include <memory>
 #include <vector>
 
@@ -34,7 +36,7 @@ class EncryptorBase {
     bzero(key_buffer, sizeof(key_buffer));
     memcpy(key_buffer, header, sizeof(PrivateRequestHeader) + header->addr_len);
     key_ = GenKey(reinterpret_cast<PrivateRequestHeader*>(key_buffer));
-    rc4_ = std::make_unique<RC4>(key_);
+    rc4_ = std::unique_ptr<RC4>(new RC4(key_));
   }
 
   virtual void Process(const Buffer& buffer) = 0;
@@ -65,7 +67,7 @@ class EncryptorBase {
 
     uint64_t tmp[buff.capacity];
     for (int i = 0; i < buff.capacity; ++i) {
-      tmp[i] = htobe32(header->timestamp) * (*(buff.memory + i));
+      tmp[i] = htonl(header->timestamp) * (*(buff.memory + i));
     }
 
     return {reinterpret_cast<uint8_t*>(tmp),

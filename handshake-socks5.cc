@@ -21,7 +21,7 @@
 namespace socks5 {
 
 ssize_t HandshakeSocks5::HandleReadable() {
-  LOG("shake hands readable. fd = {}\n", fd_);
+  LOG("shake hands readable. fd = %d\n", fd_);
   switch (status_) {
     case 0:
       if (!HandleAuth()) return -1;
@@ -44,7 +44,7 @@ std::shared_ptr<Channel> HandshakeSocks5::ToChannel() {
 }
 
 void HandshakeSocks5::ConfirmRemoteConnection() {
-  LOG("confirm connection, fd = {}, req_fd = {}\n", fd_, confirm_->fd());
+  LOG("confirm connection, fd = %d, req_fd = %d\n", fd_, confirm_->fd());
   ResquestReplyIpv4 reply{.ver      = 5,
                           .rep      = 0,
                           .rsv      = 0,
@@ -147,7 +147,7 @@ bool HandshakeSocks5::ParseRemoteAddr() {
       if (req_ip_ < 0) return false;
       memcpy(&req_port_, req->dest_addr + 1 + req->dest_addr[0],
              sizeof(req_port_));
-      LOG("target: {}:{}\n", inet_ntoa(*reinterpret_cast<in_addr*>(&req_ip_)),
+      LOG("target: %s:%d\n", inet_ntoa(*reinterpret_cast<in_addr*>(&req_ip_)),
           ntohs(req_port_));
     } else if (iworker_->deploy() == Deploy::LOCAL) {
       // copy domain

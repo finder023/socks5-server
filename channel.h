@@ -23,11 +23,11 @@ namespace socks5 {
 class Channel : public Event {
  public:
   Channel(const int fd, IWorker* worker) : Event{fd}, iworker_{worker} {
-    LOG("create new Channel. fd = {}\n", fd_);
+    LOG("create new Channel. fd = %d\n", fd_);
   }
-  ~Channel() { LOG("Channel destroied. fd = {}\n", fd_); }
+  ~Channel() { LOG("Channel destroied. fd = %d\n", fd_); }
 
-  using CacheContainer = Container<0x20000>;
+  using CacheContainer = Container<0x2000>;
 
   const char* name() const override { return "Channel"; }
   EventType   type() const override { return EventType::CHANNEL; }

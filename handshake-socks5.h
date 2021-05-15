@@ -24,9 +24,9 @@ class HandshakeSocks5 : public Event, public Handshake {
         status_{0},
         iworker_{worker},
         req_header_{reinterpret_cast<PrivateRequestHeader*>(req_buffer_)} {
-    LOG("create Handshake socks5. fd = {}\n", fd_);
+    LOG("create Handshake socks5. fd = %d\n", fd_);
   }
-  ~HandshakeSocks5() { LOG("destroy Handshake socks5, fd = {}\n", fd_); }
+  ~HandshakeSocks5() { LOG("destroy Handshake socks5, fd = %d\n", fd_); }
 
   const char* name() const override { return "Handshake"; }
   EventType   type() const override { return EventType::HANDSHAKE; }

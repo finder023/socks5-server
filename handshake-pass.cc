@@ -39,7 +39,7 @@ ssize_t HandshakePass::HandleClose() {
 }
 
 void HandshakePass::ConfirmRemoteConnection() {
-  LOG("confirm connection. fd = {}, req_fd = {}\n", fd_, confirm_->fd());
+  LOG("confirm connection. fd = %d, req_fd = %d\n", fd_, confirm_->fd());
   auto ev1 = this->ToChannel();
   auto ev2 = confirm_->ToChannel();
 

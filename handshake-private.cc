@@ -15,10 +15,10 @@ ssize_t HandshakePrivate::HandleReadable() {
   sockaddr_in sin = {0};
 
   Buffer req_buffer{req_buffer_, sizeof(PrivateRequestHeader)};
-  SocketIO(fd_).Read(req_buffer);
+  if (SocketIO(fd_).Read(req_buffer) < 0) return -1;
   Buffer addr_payload{req_buffer_ + sizeof(PrivateRequestHeader),
                       req_header_->addr_len};
-  SocketIO(fd_).Read(addr_payload);
+  if (SocketIO(fd_).Read(addr_payload) < 0) return -1;
 
   Buffer req_payload{req_buffer_, req_buffer.capacity + addr_payload.capacity};
   if (iworker_->encrypt()) {
@@ -31,7 +31,7 @@ ssize_t HandshakePrivate::HandleReadable() {
     // query domain
     ip = QueryDNS(req_header_->address, req_header_->addr_len);
     if (ip <= 0) return -1;
-    LOG("read {} target addr: {}:{}\n", req_header_->address,
+    LOG("read %s target addr: %s:%d\n", req_header_->address,
         inet_ntoa(in_addr{ip}), ntohs(uint16_t(req_header_->port)));
   }
 
@@ -66,7 +66,7 @@ ssize_t HandshakePrivate::HandleClose() {
 }
 
 void HandshakePrivate::ConfirmRemoteConnection() {
-  LOG("confirm connection. fd = {}, req_fd = {}\n", fd_, confirm_->fd());
+  LOG("confirm connection. fd = %d, req_fd = %d\n", fd_, confirm_->fd());
   auto ev1 = this->ToChannel();
   auto ev2 = confirm_->ToChannel();
 

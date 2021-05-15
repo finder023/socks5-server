@@ -54,7 +54,7 @@ class Worker : public IWorker {
   void ProcessLoopEvent();
 
  private:
-  std::optional<sockaddr_in> ParseAddress(const std::string&);
+  bool ParseAddress(const std::string&, sockaddr_in*);
 
  private:
   std::shared_ptr<Listener> listener_;

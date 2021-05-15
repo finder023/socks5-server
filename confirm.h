@@ -16,9 +16,9 @@ class Confirm : public Event {
  public:
   Confirm(const int fd, Handshake* hand_shake)
       : Event{fd}, hand_shake_{hand_shake} {
-    LOG("Confirm connection created. fd = {}\n", fd_);
+    LOG("Confirm connection created. fd = %d\n", fd_);
   }
-  ~Confirm() { LOG("Confirm connection destroied. fd = {}\n", fd_); }
+  ~Confirm() { LOG("Confirm connection destroied. fd = %d\n", fd_); }
 
   const char* name() const override { return "Confirm"; }
   EventType   type() const override { return EventType::CONFIRM; }

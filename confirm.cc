@@ -36,8 +36,8 @@ ssize_t Confirm::HandleWritable() {
       Encryptor{}.NaiveEncrypt(tmp);
     }
 
-    SocketIO(fd_).Write(tmp);
-    LOG("write {} target: {}\n", fd_, (char*)req_header->address);
+    if (SocketIO(fd_).Write(tmp) < 0) return -1;
+    LOG("write %d target: %s\n", fd_, (char*)req_header->address);
   }
 
   hand_shake_->ConfirmRemoteConnection();
